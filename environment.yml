@@ -1,0 +1,15 @@
+name: bioinfo
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+defaults:
+  - python=3.10
+  - biopython
+  - clustalo
+  - blast
+  - pandas
+  - matplotlib
+  - pip
+  - pip:
+    - nicegui

@@ -12,7 +12,6 @@ ui.page("/")(home_page)
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
         title="Sequencing Pipeline",
-        native=False,                 # own desktop window. Set False for a browser tab
-        window_size=(1000, 720),
+        native=False,
         reload=False,                # auto-reload is not supported in native mode
     )

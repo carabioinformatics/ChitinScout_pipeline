@@ -1,18 +1,21 @@
-################## Running this project for the first time using the UI ############
-- Install and set up the environment for UI displaying
-- Type these commands into your Ubuntu terminal
-    - python -m venv .venv
-    - source .venv/bin/activate
-    - pip install -r front_end_requirements.txt
-- When all of this is installed, you can follow the below instructions to open the display
+################## Setting up your conda environment ################
+- You need an internet connection for this
+- In the root directory
+- The first time, type this in the Ubuntu terminal
+    - conda env create -f environment.yml
+- For every other time to activate environment
+    - conda activate bioinfo
+- To deactivate the environment
+    - conda deactivate
+- If any changes are made to the environment.yml file
+    - Save changes
+    - Run "conda env update -f environment.yml --prune" in the command line
+    - Run as normal
 
-################# Every time you run this project using the UI ################
-- make sure you are in the root directory of the project (not the back_end or the front_end folder)
-- Type these commands in the Ubuntu terminal:
-    - source .venv/bin/activate (active UI environment)
-    - python app.py (start the UI)
-- This creates website link, click on this to open the UI
-- Stop the program by typing Ctrl+C in the terminal
+############### Running this program using the UI #####################
+- In the root directory, make sure your environment is set up
+- Run python app.py
+- Open the link given to you to open the UI
 
 ################# Running the pipeline from the terminal only ##################
 - Folow instructions in the README.md in the back_end folder
