@@ -5,19 +5,24 @@ from nicegui import app, ui
 from back_end.runner import PipelineRunner
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
+from front_end.components.progress_bar_comp import SampleProgress
 from front_end.sections.pipeline_settings import PipelineSettings
 from front_end.sections.search_thresholds import SearchThresholds
+from front_end.sections.file_picker import FilePicker
+from front_end.sections.time_plot import TimePlot
 from front_end.theme import apply_theme
 
 # --- Status states ----------------------------------------------------
 # state -> (message, Quasar colour, icon)
 STATUS = {
-    "waiting":   ("Waiting for pipeline parameters", "grey",     "hourglass_empty"),
-    "starting":  ("Starting with run",         "info",     "play_circle"),
-    "busy":      ("Busy with pipeline",        "warning",  "autorenew"),
-    "completed": ("Pipeline completed",        "positive", "check_circle"),
-    "failed":    ("Pipeline failed",           "negative", "error"),
-    "stopped":   ("Pipeline stopped",          "blue-grey", "stop_circle"),
+    "waiting":        ("Waiting for primer choice",     "grey",      "hourglass_empty"),
+    "select_samples": ("Waiting for sample selection",  "grey",      "checklist"),
+    "ready":          ("Ready to run",                  "primary",   "task_alt"),
+    "starting":       ("Starting with run",             "info",      "play_circle"),
+    "busy":           ("Busy with pipeline",            "warning",   "autorenew"),
+    "completed":      ("Pipeline completed",            "positive",  "check_circle"),
+    "failed":         ("Pipeline failed",               "negative",  "error"),
+    "stopped":        ("Pipeline stopped",              "blue-grey", "stop_circle"),
 }
 
 
@@ -42,31 +47,60 @@ def home_page() -> None:
         output_log.push(message)
 
     # ---- Event handlers
+    def update_ready_state() -> None:
+        """Decide whether Run can be clicked and what the status should say."""
+        ready = settings.is_complete and file_picker.has_selection
+        run_button.set_enabled(ready)
+
+        if not settings.is_complete:
+            set_status("waiting")
+        elif not file_picker.has_selection:
+            set_status("select_samples")
+        else:
+            set_status("ready")
+
+        # Shows "0 of N samples complete" for the current selection
+        progress.update(0, len(file_picker.selected_samples()))
+
     def on_settings_change() -> None:
-        run_button.set_enabled(settings.is_complete)
-        set_status("waiting")
+        file_picker.update_primer(settings.primer)   # may discard a stale list
+        update_ready_state()
 
     def set_inputs_enabled(enabled: bool) -> None:
         settings.set_enabled(enabled)
         thresholds.set_enabled(enabled)
-        run_button.set_enabled(enabled and settings.is_complete)
+        file_picker.set_enabled(enabled)
+        run_button.set_enabled(
+            enabled and settings.is_complete and file_picker.has_selection
+        )        
         stop_button.set_enabled(not enabled)
 
     async def on_run_click() -> None:
+        samples = file_picker.selected_samples()
+
         set_inputs_enabled(False)
         output_log.clear()
+        time_plot.hide()
         set_status("starting")
+        progress.update(0, len(samples))
 
-        # search_thresholds = thresholds.values()
+        log(f"Samples selected: {', '.join(samples)}")
         log(thresholds.describe())
-        # log(f"Search thresholds: {search_thresholds}")
+        plot_path = None
+
+        def on_plot(path) -> None:
+            nonlocal plot_path
+            plot_path = path
 
         try:
             exit_code = await runner.run(
                 primer_mode=settings.primer,
                 extra_args=settings.extra_args() + thresholds.extra_args(),
+                sample_names=samples,
                 on_start=lambda: set_status("busy"),
                 on_output=log,
+                on_progress=progress.update,
+                on_plot=on_plot,
             )
             if runner.was_stopped:
                 log("Pipeline stopped by user. Click Run to start again.")
@@ -104,6 +138,7 @@ def home_page() -> None:
 
         settings = PipelineSettings(log=log, on_change=on_settings_change)
         thresholds = SearchThresholds(log=log)
+        file_picker = FilePicker(log=log, on_change=update_ready_state)
 
         run_button = button("Run pipeline", on_run_click, icon="play_arrow")
         run_button.set_enabled(False)
@@ -111,10 +146,17 @@ def home_page() -> None:
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
             text("Status", "label")
             status_display()
+            progress = SampleProgress()
 
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
             text("Pipeline output", "label")
             output_log = ui.log(max_lines=500).classes("w-full h-64")
+
+        with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
+            text("Pipeline output", "label")
+            output_log = ui.log(max_lines=500).classes("w-full h-64")
+
+        time_plot = TimePlot()
 
         # ---- Bottom buttons
         with ui.row().classes("w-full justify-between"):

@@ -1,10 +1,16 @@
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 def main():
     print("CL: Start with time plotting.")
+    date_today = datetime.now()
+    # Format as yyyy-mm-dd_hh:mm
+    formatted_date_today = date_today.strftime("%Y-%m-%d_%H:%M")
+    
     time_report = sys.argv[1]
+    time_plot = sys.argv[2]
 
     # Get time input values from textfile
     time_input = pd.read_csv(time_report, sep= '\t')
@@ -22,7 +28,7 @@ def main():
     plt.legend()
     plt.tight_layout()
     
-    plt.savefig("./Output/INT26_TIME_REPORT_GRAPH.png", dpi=300)
+    plt.savefig(time_plot, dpi=300)
     #plt.show()
 
     print("CL: Done with time plotting.")

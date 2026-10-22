@@ -22,31 +22,10 @@ echo -e "Pipeline started" > "$pipeline_report"
 timing_report="./Output/$today_date/INT26_TIME_REPORT.txt"
 echo -e "Sample name\tCleanup time (s)\tBLAST time (s)\tTotal time (s)" > "$timing_report"
 
-draw_progress() {
-    local current=$1
-    local total=$2
+# Function to process a sample
+process_sample() {
+    local forward=$1
 
-    local width=40
-
-    local percent=$((100 * current / total))
-    local filled=$((width * current / total))
-    local empty=$((width - filled))
-
-    printf "\r["
-
-    printf "%0.s#" $(seq 1 $filled)
-    printf "%0.s-" $(seq 1 $empty)
-
-    printf "] %3d%% (%d/%d samples)\n" \
-     "$percent" "$current" "$total"
-}
-
-num_input_files=$(find ./Input -name "*TEF*.ab1" | wc -l)
-num_samples=$((num_input_files/2))
-current_sample_number=0
-
-for forward in ./Input/*TEF_forward___1.ab1
-do
     total_start_time=$(date +%s.%N)
     # Extract sample name
     sample_name=$(basename "$forward" | cut -d'_' -f2)
@@ -67,7 +46,7 @@ do
     if [[ -z "$reverse" ]]; then
         echo -e "--$sample_name terminated." >> "$pipeline_report"
         echo -e "Error: Reverse read file not found for $sample_name." >> "$pipeline_report"
-        continue
+        return
     fi
 
     # Make relevant directories
@@ -97,24 +76,24 @@ do
             # No input file found
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Invalid starting file argument." >> "$pipeline_report"
-            continue
+            return
             ;;
         2) 
             # Chosen error code for unsuccessful trimming
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Too large amount of original read was trimmed. Should manually check this sample." >> "$pipeline_report"
-            continue
+            return
             ;;
         124)
             # Timeout error code
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Trimming and consensus timed out after ${time_limit} seconds" >> "$pipeline_report"
-            continue
+            return
             ;;
         *)
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Unknown exit code for $sample_name" >> "$pipeline_report"
-            continue
+            return
             ;;
     esac
     
@@ -133,23 +112,24 @@ do
             # Error code for incorrect input file
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Invalid starting file argument." >> "$pipeline_report"
-            continue
+            return
             ;;
         2)
             # Chosen error code for unsuccessful search
             echo -e "---$sample_name unsuccessful." >> "$pipeline_report"
             echo -e "-----Requires attention: No BLAST hits were found following required thresholds." >> "$pipeline_report"
+            return
             ;;
         124)
             # Timeout error code
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: BLAST timed out after ${time_limit} seconds" >> "$pipeline_report"
-            continue
+            return
             ;;
         *)
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Unknown exit code for $sample_name" >> "$pipeline_report"
-            continue
+            return
             ;;
     esac
 
@@ -165,9 +145,55 @@ do
     # Ending
     echo "$sample_name complete!"
     echo "================================================="
-    ((current_sample_number++))
+}
+
+# Function to draw progress bar
+draw_progress() {
+    local current=$1
+    local total=$2
+
+    local width=40
+
+    local percent=$((100 * current / total))
+    local filled=$((width * current / total))
+    local empty=$((width - filled))
+
+    printf "\r["
+
+    printf "%0.s#" $(seq 1 $filled)
+    printf "%0.s-" $(seq 1 $empty)
+
+    printf "] %3d%% (%d/%d samples)\n" \
+     "$percent" "$current" "$total"
+}
+
+# Find all the forward files and make a list
+forward_files=()
+if [[ -n "$SAMPLE_LIST_FILE" && -f "$SAMPLE_LIST_FILE" ]]; then
+    while IFS= read -r wanted_sample || [[ -n "$wanted_sample" ]]; do
+        [[ -z "$wanted_sample" ]] && continue
+        for file in ./Input/*_"${wanted_sample}"_TEF_forward___1.ab1; do
+            [[ -e "$file" ]] && forward_files+=("$file")
+        done
+    done < "$SAMPLE_LIST_FILE"
+else
+    for file in ./Input/*TEF_forward___1.ab1; do
+        [[ -e "$file" ]] && forward_files+=("$file")
+    done
+fi
+
+num_samples=${#forward_files[@]}
+current_sample_number=0
+echo "Samples to process: $num_samples"
+
+# Use each forward file to process the sample
+for forward in "${forward_files[@]}"; 
+do
+    process_sample "$forward"
+    current_sample_number=$((current_sample_number + 1))
     draw_progress "$current_sample_number" "$num_samples"
 done
+
 
 echo -e "Pipeline ended" >> "$pipeline_report"
 echo "Pipeline finished"
