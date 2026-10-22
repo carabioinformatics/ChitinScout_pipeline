@@ -8,7 +8,7 @@ Process Sanger sequence data of the ITS region from fungal samples to identify w
 Sample preparation and processing: 
 Samples were collected from different Ostrich farms and egg incubation rooms and were then cultured so that fungal species could grow. The samples underwent DNA extraction and then a PCR reaction using ITS1 (forward) and ITS4 (reverse) primers to confirm that fungal DNA can be found in the sample. If there was positive amplification, the PCR reaction is repeated. The PCR product of about 600 bp is purified and then sent to CAF Stellenbosch Campus for Sanger sequencing. 
 
-########### Download requirements #################
+########### Download/sofware requirements #################
 - Python 3.10 worked best for me
 - Biopython (pip install biopython)
 - Miniconda (https://www.anaconda.com/docs/getting-started/miniconda/install/windows-gui-install)
@@ -24,8 +24,8 @@ For updating UNITE database:
         -dbtype nucl \
         -out unite_its_database
 
-############### Database structure #################
-- In terminal, outside conda, execute
+############### Curated database structure #################
+- In terminal, outside conda environment, execute
     mkdir -p ~/databases/unite
     cd ~/databases/unite
     Download the UNITE FASTA file into this directory
@@ -65,6 +65,7 @@ Testing/
 |       |-- Cleanup
 |       |-- Final
 |       |-- Comparison
+|   |-- etc.
 
 ################ How to run ##################
 - In root directory
@@ -111,6 +112,6 @@ The ./Output directory also contains a time report containing the execution time
 ################ Order in which to interpret output #######################
 1) Look at the pipeline report and determine which samples possibly failed any steps. Depending on why these samples failed, they might need to be re-run or manually inspected.
 2) Look at the time report and time report graph. Identify any samples that had longer execution time and identify which part of the pipeline took long to execute. If any samples are identified, these should be noted to inspect manually or closer.
-3) Go to the individual sample output directories for all the samples that had "normal" execution times. Look at each samples comparison graph. The species with the highest score (0 - 1) together with the most hit percentage (0 - 100%; the number in brackets), is mostly likely the best species fit for the unknown sample.
+3) Go to the individual sample output directories for all the samples that had "normal" execution times. Look at each samples comparison graph. The species with the highest score (0.5 - 1) together with the most hit percentage (0 - 100%; secondary line graph), is mostly likely the best species fit for the unknown sample.
 4) Check if any RefSeq hits were found during the search. This type of hit could be a good indication of that species being a good match. 
 5) If the results from the comparison graph does not give a fitting conclusion, then the BLAST summaries and taxonomy counters in the ./Final directory can be referenced. 
