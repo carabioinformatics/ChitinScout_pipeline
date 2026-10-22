@@ -2,3 +2,5 @@ Input/
 Output/
 **/*.tmp
 database/
+CaraRunInstructions.txt
+nextflow
