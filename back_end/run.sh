@@ -4,7 +4,7 @@ echo "Start by picking a primer"
 
 if [[ $# -lt 1 ]]; then
     echo "Command line arguments required"
-    echo "Usage: $0 <0|1> [taxonomy_mode] [database_mode]"
+    echo "Usage: $0 <0|1> [taxonomy_mode] [database_mode] [window_size] [quality_threshold] [e_value_threshold] [identity_threshold] [coverage_threshold] [time_limit]"
     echo "  0 = ITS pipeline"
     echo "  1 = TEF pipeline"
     exit 1

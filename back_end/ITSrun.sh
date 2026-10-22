@@ -10,12 +10,12 @@ today_date=$(date +"%Y-%m-%d_%H:%M")
 mkdir -p "./Output/$today_date"
 
 # Set thresholds for search specificity, can be changed
-window_size=5
-quality_threshold=20
-e_value_threshold=1e-15
-identity_threshold=70
-coverage_threshold=70
-time_limit=200
+window_size=${3:-5}
+quality_threshold=${4:-20}
+e_value_threshold=${5:-1e-15}
+identity_threshold=${6:-90}
+coverage_threshold=${7:-90}
+time_limit=${8:-200}
 
 pipeline_report="./Output/$today_date/INT26_PIPELINE_REPORT.txt"
 echo -e "Pipeline started" > "$pipeline_report"
