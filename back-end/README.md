@@ -69,7 +69,7 @@ Testing/
 |       |-- etc.
 
 ################ How to run ##################
-- In root directory
+- In root directory (back-end)
 - If you ever need to pre-maturely stop the pipeline, type Ctrl+C in the terminal it is running. Or Ctrl+Z to stop temporarily.
 - If running for the first time
     - ./build_database.sh
