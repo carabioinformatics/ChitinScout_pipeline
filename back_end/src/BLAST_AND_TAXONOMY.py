@@ -165,7 +165,7 @@ def main():
     comparison_start_time = time.perf_counter()
     print("CL: NCBI hits: " + str(len(arr_hits_ncbi)))
     print("CL: UNITE hits: " + str(len(arr_hits_unite)))
-    comparison(s_comparison_report, s_comparison_graph, arr_hits_ncbi, arr_hits_unite, total_ncbi_hits, total_unite_hits)
+    comparison(s_comparison_report, s_comparison_graph, arr_hits_ncbi, arr_hits_unite, len(arr_hits_ncbi), len(arr_hits_unite))
     comparison_end_time = time.perf_counter()
     with open(s_performance_report, "a") as performance_output:
         performance_output.write("------------------------------ Comparison report -------------------------------\n")

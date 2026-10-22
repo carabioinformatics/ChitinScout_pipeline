@@ -107,6 +107,8 @@ def home_page() -> None:
                 set_status("stopped")
             else: 
                 set_status("completed" if exit_code == 0 else "failed")
+                if exit_code == 0 and plot_path and plot_path.is_file():
+                    time_plot.show(plot_path)        
         except Exception as error:   # e.g. bash not found, script missing
             log(f"Could not start pipeline: {error}")
             set_status("failed")
@@ -147,10 +149,6 @@ def home_page() -> None:
             text("Status", "label")
             status_display()
             progress = SampleProgress()
-
-        with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
-            text("Pipeline output", "label")
-            output_log = ui.log(max_lines=500).classes("w-full h-64")
 
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
             text("Pipeline output", "label")
