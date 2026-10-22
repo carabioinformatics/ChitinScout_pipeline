@@ -1,0 +1,24 @@
+# Virtual environments or local copies
+.venv
+back_end/database/
+
+# Local files
+back_end/Input/
+back_end/Output/
+back_end/**/*.tmp
+
+# Personal files
+back_end/CaraRunInstructions.txt
+TODO.txt
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editior and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Unused files
+back_end/nextflow
