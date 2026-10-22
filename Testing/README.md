@@ -55,36 +55,44 @@ Testing/
 |-- Input (needs to be created by user)
 |   |-- *.ab1 files (forward and reverse files)
 |-- Output (gets created by run.sh file)
-|   |-- Sample1 (created by run.sh for each sample)
-|       |-- BLAST
-|       |-- Cleanup
-|       |-- Final
-|       |-- Comparison
-|   |-- Sample2 (created by run.sh for each sample)
-|       |-- BLAST
-|       |-- Cleanup
-|       |-- Final
-|       |-- Comparison
-|   |-- etc.
+|   |-- Date of run (yyyy-mm-dd_hh:mm)
+|       |-- Sample1 (created by run.sh for each sample)
+|           |-- BLAST
+|           |-- Cleanup
+|           |-- Final
+|           |-- Comparison
+|       |-- Sample2 (created by run.sh for each sample)
+|           |-- BLAST
+|           |-- Cleanup
+|           |-- Final
+|           |-- Comparison
+|       |-- etc.
 
 ################ How to run ##################
 - In root directory
+- If you ever need to pre-maturely stop the pipeline, type Ctrl+C in the terminal it is running. Or Ctrl+Z to stop temporarily.
 - If running for the first time
-    ./build_database.sh
+    - ./build_database.sh
+    - chmod +x run.sh run_ITS.sh run_TEF.sh
 - For every time: 
-    ./run.sh taxonomy_mode database_mode
-    What I usually use: ./run.sh 1 0
+    ./run.sh primer_mode taxonomy_mode database_mode
+    What I usually use: ./run.sh 0 1 0
 - What each parameter of ./run.sh means
+    Primer mode: 
+        Need to specify which primers are used so that pipeline gets sligthly adapted to perform optimally for those primers.
+        Mode 0: ITS primers
+        Mode 1: TEF primers
     Taxonomy mode:
         Mode 0: Does complete BLASTn search and makes a summary of the results.
         Mode 1: Does a complete BLASTn search and makes a summary of the results. But also then counts how many hits were found for each species.
     Database mode:
         Mode 0: Do a BLASTn search on the NCBI and UNITE database.
-        Mode 1: Do a BLASTn search only on NCBI database.
+        Mode 1: Do a BLASTn search only on NCBI database. (recommended when running primer mode 1)
         Mode 2: Do a BLASTn search only on UNITE database.
 
-################ ./run.sh Variables ##################
-These variables can be changed to make more conservative trimming to raw data or filtering of potential search hits. 
+################ ./run.sh Threshold variables ##################
+These variables can be changed to make more conservative trimming to raw data or stricter filtering of potential search hits. 
+This is found in at the top of both the ITSrun.sh and TEFrun.sh files.
 Window size: (standard: 5)
     This is used when trimming the raw sequences. The raw sequences is split into windows with this size. The average phred score of this window is taken. This this average score is not good, then this region is considered for trimming. This is more accurate than looking at individual nucleotide phred scores.
 Quality threshold for trimming:(standard: 20)

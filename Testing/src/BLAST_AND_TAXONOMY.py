@@ -83,20 +83,20 @@ def main():
     start_time = time.perf_counter()
     ################### Arguments initialisation ##############################
     s_input_file = sys.argv[1]
-    taxonomy_mode = int(sys.argv[2])
-    database_mode = int(sys.argv[3])
-    f_e_value_threshold = float(sys.argv[4])
-    identity_threshold = float(sys.argv[5])
-    coverage_threshold = float(sys.argv[6])
+    s_file_identifier = sys.argv[2]
+    taxonomy_mode = int(sys.argv[3])
+    database_mode = int(sys.argv[4])
+    f_e_value_threshold = float(sys.argv[5])
+    identity_threshold = float(sys.argv[6])
+    coverage_threshold = float(sys.argv[7])
     if (f_e_value_threshold == None):
         f_e_value_threshold = 0.001
-    final_directory_extension = sys.argv[7]
-    blast_directory_extension = sys.argv[8]
-    comparison_directory_extension = sys.argv[9]
+    final_directory_extension = sys.argv[8]
+    blast_directory_extension = sys.argv[9]
+    comparison_directory_extension = sys.argv[10]
     ######################### Starting values #################################
-    i_name_start = 0
-    i_name_end = 0
-    s_file_identifier = ""
+    # i_name_start = 0
+    # i_name_end = 0
     s_blast_complete_ncbi = ""
     s_blast_summary_ncbi = ""
     s_blast_complete_unite = ""
@@ -112,10 +112,9 @@ def main():
     comparison_start_time = 0
     comparison_end_time = 0
     #################### Establish how files will be named #####################
-    i_name_start = s_input_file.find("_") + 1
-    i_name_end = s_input_file.find("_", i_name_start)
-    if ((i_name_start != -1) and (i_name_end != -1)):
-        s_file_identifier = s_input_file[i_name_start:i_name_end]
+    # i_name_start = s_input_file.find("_") + 1
+    # i_name_end = s_input_file.find("_", i_name_start)
+    if (s_file_identifier != ""):
         s_blast_complete_ncbi = blast_directory_extension + "/INT26_" + s_file_identifier + "_BLAST_COMPLETE_NCBI.xml"
         s_blast_summary_ncbi = final_directory_extension + "/INT26_" + s_file_identifier + "_BLAST_SUMMARY_NCBI.txt"
         s_blast_complete_unite = blast_directory_extension + "/INT26_" + s_file_identifier + "_BLAST_COMPLETE_UNITE.xml"
