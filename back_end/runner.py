@@ -17,6 +17,7 @@ PLOT_PATTERN = re.compile(r"^PLOT_FILE:\s*(.+)$")
 # Marker lines printed by the pipeline scripts (see pipeline_status.py)
 STEP_PATTERN = re.compile(r"^@@STEP\|([^|]*)\|([^|]*)\|([^|]*)\|?(.*)$")
 SAMPLE_ERROR_PATTERN = re.compile(r"^@@SAMPLE_ERROR\|([^|]*)\|(.*)$")
+OUTPUT_DIR_PATTERN = re.compile(r"^@@OUTPUT_DIR\|(.+)$")
 
 class PipelineRunner:
     """Runs ./run.sh and can stop it, including everything it started."""
@@ -44,7 +45,8 @@ class PipelineRunner:
         on_progress: Optional[Callable[[int, int], None]] = None,
         on_plot: Optional[Callable[[Path], None]] = None,
         on_step: Optional[Callable[[str, str, str, str], None]] = None,
-        on_sample_error: Optional[Callable[[str, str], None]] = None      
+        on_sample_error: Optional[Callable[[str, str], None]] = None,
+        on_output_dir: Optional[Callable[[Path], None]] = None      
     ) -> int:
         """Run ./run.sh <primer_mode> [extra_args...] and return its exit code."""
         self._stopped_by_user = False
@@ -79,6 +81,11 @@ class PipelineRunner:
                     if on_sample_error:
                         on_sample_error(*error_match.groups())
                     continue  
+                dir_match = OUTPUT_DIR_PATTERN.match(line)
+                if dir_match:
+                    if on_output_dir:
+                        on_output_dir((SCRIPT_DIR/dir_match.group(1)).resolve())
+                    continue
                               
                 if on_output:
                     on_output(line)

@@ -8,6 +8,7 @@ database_mode=$2
 
 today_date=$(date +"%Y-%m-%d_%H:%M")
 mkdir -p "./Output/$today_date"
+echo "@@OUTPUT_DIR|./Output/$today_date"
 
 # Set thresholds for search specificity, can be changed
 window_size=${3:-5}

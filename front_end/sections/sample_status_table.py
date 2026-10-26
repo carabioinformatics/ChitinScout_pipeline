@@ -1,6 +1,6 @@
 """Sample status table: one row per sample, one column per pipeline step."""
 from nicegui import ui
-
+from typing import Callable, Optional
 from back_end.pipeline_steps import STEPS
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
@@ -13,15 +13,24 @@ CELL_STYLE = {
     "failed":  ("cancel", "negative"),
 }
 STEP_LABELS = dict(STEPS)
-
+RESULTS_READY_STEP = "summary"
 
 class SampleStatusTable:
     """Shows a status icon for every sample/step. Click a red cross for the error."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        on_view_results: Callable[[str], None],
+        on_close_results: Callable[[], None],
+    ) -> None:
+        self._on_view_results = on_view_results
+        self._on_close_results = on_close_results
+
         self._cells: dict[tuple[str, str], ui.button] = {}
         self._status: dict[tuple[str, str], str] = {}
         self._errors: dict[tuple[str, str], str] = {}
+        self._results_buttons: dict[str, ui.button] = {}
+        self._open_sample: Optional[str] = None
         self._samples: list[str] = []
         self._build()
 
@@ -31,9 +40,13 @@ class SampleStatusTable:
             text("Sample progress", "label")
             with ui.scroll_area().classes("w-full h-72"):
                 self._grid = ui.grid(
-                    columns=f"8rem repeat({len(STEPS)}, minmax(5rem, 1fr))"
+                    columns=f"8rem repeat({len(STEPS)}, minmax(5rem, 1fr)) 6.5rem"
                 ).classes("w-full gap-x-2 gap-y-1 items-center")
-            text("Click a red cross to see why a step failed.", "description")
+                with ui.element("div").classes("w-full max-h-72 overflow-auto"):
+                    self._grid = ui.grid(
+                        columns=f"9rem repeat({len(STEPS)}, 6rem) 7rem"
+                    ).classes("min-w-max gap-x-2 gap-y-1 items-center")            
+                text("Click a red cross to see why a step failed.", "description")
         self._card.set_visibility(False)   # hidden until a run starts
 
         # One shared error dialog, filled in when a red cross is clicked
@@ -61,6 +74,29 @@ class SampleStatusTable:
         self._dialog_message.set_text(self._errors.get(key, ""))
         self._dialog.open()
 
+    def _toggle_results(self, sample: str) -> None:
+        if self._open_sample == sample:
+            self._close_results()
+            return
+        if self._open_sample is not None:           # another sample was open
+            self._set_button_state(self._open_sample, is_open=False)
+        self._open_sample = sample
+        self._set_button_state(sample, is_open=True)
+        self._on_view_results(sample)
+
+    def _close_results(self) -> None:
+        if self._open_sample is not None:
+            self._set_button_state(self._open_sample, is_open=False)
+        self._open_sample = None
+        self._on_close_results()
+
+    def _set_button_state(self, sample: str, is_open: bool) -> None:
+        results_button = self._results_buttons.get(sample)
+        if results_button is None:
+            return
+        results_button.set_text("Close" if is_open else "View")
+        results_button.props(f"icon={'close' if is_open else 'visibility'}")
+
     # ---- What the page needs from this section
     def reset(self, samples: list[str]) -> None:
         """Start a fresh table: every step of every sample is waiting."""
@@ -68,6 +104,9 @@ class SampleStatusTable:
         self._cells.clear()
         self._status.clear()
         self._errors.clear()
+        self._results_buttons.clear()
+        self._open_sample = None
+        self._on_close_results()         
         self._grid.clear()
 
         with self._grid:
@@ -86,6 +125,14 @@ class SampleStatusTable:
                     self._status[key] = "waiting"
                     self._apply(key)
 
+                results_button = (
+                    ui.button("View", icon="visibility",
+                              on_click=lambda s=sample: self._toggle_results(s))
+                    .props("flat dense no-caps color=primary")
+                    .classes("justify-self-center")
+                )
+                results_button.set_enabled(False)   # unlocked when the summary is done
+                self._results_buttons[sample] = results_button
         self._card.set_visibility(bool(samples))
 
     def set_step(self, sample: str, step: str, status: str, message: str = "") -> None:
@@ -93,6 +140,8 @@ class SampleStatusTable:
         if key not in self._cells or status not in CELL_STYLE:
             return
         self._status[key] = status
+        if status == "done" and step == RESULTS_READY_STEP:
+            self._results_buttons[sample].set_enabled(True)        
         if status == "failed":
             self._errors[key] = message or "No error message was reported."
         self._apply(key)

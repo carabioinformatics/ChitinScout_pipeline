@@ -6,12 +6,13 @@ from back_end.runner import PipelineRunner
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
 from front_end.components.progress_bar_comp import SampleProgress
-from front_end.sections.pipeline_settings import PipelineSettings
+from front_end.sections.pipeline_settings import PRIMERS, PipelineSettings
 from front_end.sections.search_thresholds import SearchThresholds
 from front_end.sections.file_picker import FilePicker
 from front_end.sections.time_plot import TimePlot
 from front_end.sections.input_upload import InputUpload
 from front_end.sections.sample_status_table import SampleStatusTable
+from front_end.sections.results_panel import ResultsPanel
 from front_end.theme import apply_theme
 
 # --- Status states ----------------------------------------------------
@@ -31,7 +32,7 @@ STATUS = {
 def home_page() -> None:
     apply_theme()
 
-    state = {"status": "waiting"}
+    state = {"status": "waiting", "output_dir": None, "run_primer": None}    
     runner = PipelineRunner()
 
     @ui.refreshable
@@ -78,12 +79,22 @@ def home_page() -> None:
         )        
         stop_button.set_enabled(not enabled)
 
+    def show_results(sample: str) -> None:
+        results_panel.show(
+            sample=sample,
+            output_dir=state["output_dir"],
+            primer_mode=state["run_primer"],
+            primer_label=PRIMERS[state["run_primer"]],
+        )
+
     async def on_run_click() -> None:
         samples = file_picker.selected_samples()
 
         set_inputs_enabled(False)
         output_log.clear()
         time_plot.hide()
+        state["output_dir"] = None
+        state["run_primer"] = settings.primer
         status_table.reset(samples)
         set_status("starting")
         progress.update(0, len(samples))
@@ -96,6 +107,9 @@ def home_page() -> None:
             nonlocal plot_path
             plot_path = path
 
+        def on_output_dir(path) -> None:
+            state["output_dir"] = path
+
         try:
             exit_code = await runner.run(
                 primer_mode=settings.primer,
@@ -107,6 +121,7 @@ def home_page() -> None:
                 on_plot=on_plot,
                 on_step=status_table.set_step,
                 on_sample_error=status_table.fail_current,
+                on_output_dir=on_output_dir,
             )
             if runner.was_stopped:
                 log("Pipeline stopped by user. Click Run to start again.")
@@ -136,7 +151,7 @@ def home_page() -> None:
         app.shutdown()
 
     # ---- Layout
-    with ui.column().classes("w-full max-w-3xl mx-auto gap-6 p-8"):
+    with ui.column().classes("w-full max-w-6xl mx-auto gap-6 p-8"):
 
         with ui.column().classes("gap-1"):
             text("Welcome to ChitinScout", "title")
@@ -158,7 +173,11 @@ def home_page() -> None:
             status_display()
             progress = SampleProgress()
 
-        status_table = SampleStatusTable()
+        status_table = SampleStatusTable(
+            on_view_results=show_results,
+            on_close_results=lambda: results_panel.hide(),
+        )
+        results_panel = ResultsPanel()
 
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
             text("Pipeline output", "label")
