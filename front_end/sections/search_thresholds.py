@@ -24,11 +24,45 @@ class SearchThresholds:
     # ---- UI
     def _build(self) -> None:
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-4"):
-            text("Search thresholds", "label")
+            text("Pipeline thresholds and specificity", "label")
 
             self._use_defaults = ui.checkbox(
                 "Use default values", value=True, on_change=self._handle_defaults_toggle
             )
+
+            text("Trimming related parameters", "label")
+
+            self._trim_window_size = labeled_slider(
+                "Trimming window size",
+                minimum=2, maximum=20, step=1,
+                value=DEFAULT_TRIM_WINDOW_SIZE, 
+                format_value=lambda v: f"{int(v)}"
+            )
+
+            self._quality_threshold = labeled_slider(
+                "Trimming lowest quality threshold",
+                minimum=10, maximum=30, step=1,
+                value=DEFAULT_QUALITY_THRESHOLD, 
+                format_value=lambda v: f"{int(v)}"
+            )
+
+            text("NCBI search related parameters", "label")
+
+            self._ncbi_word_size = labeled_slider(
+                "NCBI word size",
+                minimum=7, maximum=25, step=1,
+                value=DEFAULT_NCBI_WORD_SIZE,
+                format_value=lambda v: f"{int(v)}"
+            )
+
+            self._time_limit = labeled_slider(
+                "Time limit per sample (ms)",
+                minimum=100, maximum=400, step=10,
+                value=DEFAULT_TIME_LIMIT, 
+                format_value=lambda v: f"{int(v)}"
+            )
+
+            text("NCBI result specificity related parameters", "label")
 
             self._evalue = labeled_slider(
                 "Max e-value",
@@ -47,34 +81,6 @@ class SearchThresholds:
                 minimum=0, maximum=100, step=1,
                 value=DEFAULT_COVERAGE,
                 format_value=lambda v: f"{int(v)}%",
-            )
-
-            self._trim_window_size = labeled_slider(
-                "Trimming window size",
-                minimum=2, maximum=20, step=1,
-                value=DEFAULT_TRIM_WINDOW_SIZE, 
-                format_value=lambda v: f"{int(v)}"
-            )
-
-            self._quality_threshold = labeled_slider(
-                "Trimming lowest quality threshold",
-                minimum=10, maximum=30, step=1,
-                value=DEFAULT_QUALITY_THRESHOLD, 
-                format_value=lambda v: f"{int(v)}"
-            )
-
-            self._ncbi_word_size = labeled_slider(
-                "NCBI word size",
-                minimum=7, maximum=25, step=1,
-                value=DEFAULT_NCBI_WORD_SIZE,
-                format_value=lambda v: f"{int(v)}"
-            )
-
-            self._time_limit = labeled_slider(
-                "Time limit per sample (ms)",
-                minimum=100, maximum=400, step=10,
-                value=DEFAULT_TIME_LIMIT, 
-                format_value=lambda v: f"{int(v)}"
             )
 
         self._update_slider_state()

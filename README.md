@@ -126,3 +126,6 @@ For updating UNITE database:
 ####################### Important notes ################################
 - You can't just rename for example an input file. If you want to, you need to rename
 the file name and open the .ab file and rename the sequence as well with the same name.
+- At the moment, the NCBI BLAST search only searches for hits that are fungi organisms. If
+you would like to change that, you will need to change or remove that line from the blastn_ncbi 
+method in ./back_end/src/BLAST_AND_TAXONOMY.py.

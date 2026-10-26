@@ -10,6 +10,7 @@ from front_end.sections.pipeline_settings import PipelineSettings
 from front_end.sections.search_thresholds import SearchThresholds
 from front_end.sections.file_picker import FilePicker
 from front_end.sections.time_plot import TimePlot
+from front_end.sections.input_upload import InputUpload
 from front_end.theme import apply_theme
 
 # --- Status states ----------------------------------------------------
@@ -69,6 +70,7 @@ def home_page() -> None:
     def set_inputs_enabled(enabled: bool) -> None:
         settings.set_enabled(enabled)
         thresholds.set_enabled(enabled)
+        input_upload.set_enabled(enabled)
         file_picker.set_enabled(enabled)
         run_button.set_enabled(
             enabled and settings.is_complete and file_picker.has_selection
@@ -132,7 +134,7 @@ def home_page() -> None:
     with ui.column().classes("w-full max-w-3xl mx-auto gap-6 p-8"):
 
         with ui.column().classes("gap-1"):
-            text("Welcome", "title")
+            text("Welcome to ChitinScout", "title")
             text(
                 "Choose your settings below and start the sequencing pipeline.",
                 "description",
@@ -140,6 +142,7 @@ def home_page() -> None:
 
         settings = PipelineSettings(log=log, on_change=on_settings_change)
         thresholds = SearchThresholds(log=log)
+        input_upload = InputUpload(log=log, on_files_added=lambda: file_picker.rescan())        
         file_picker = FilePicker(log=log, on_change=update_ready_state)
 
         run_button = button("Run pipeline", on_run_click, icon="play_arrow")

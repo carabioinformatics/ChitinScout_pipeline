@@ -141,6 +141,17 @@ class FilePicker:
         self._scanned_primer = None
 
     # ---- What the page needs from this section
+    def rescan(self) -> None:
+        """Search again after new files arrived. Does nothing if no search has
+        been done yet, and keeps the samples the user already ticked."""
+        if self._scanned_primer is None:
+            return
+        previously_selected = set(self.selected_samples())
+        self._find_files()
+        for name in previously_selected:
+            if name in self._checkboxes:
+                self._checkboxes[name].value = True
+    
     def update_primer(self, primer: Optional[int]) -> None:
         """Call whenever the settings change. A list built for another primer
         is thrown away, because the file endings differ per primer."""
