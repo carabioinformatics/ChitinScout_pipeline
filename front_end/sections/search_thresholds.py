@@ -5,11 +5,12 @@ from front_end.components.slider_comp import labeled_slider
 from front_end.components.text_comp import text
 
 # Replace these placeholders with your real defaults.
-DEFAULT_WINDOW_SIZE = 5
+DEFAULT_TRIM_WINDOW_SIZE = 5
 DEFAULT_QUALITY_THRESHOLD = 20
 DEFAULT_EVALUE_EXPONENT = -15    # means 1e-15
 DEFAULT_IDENTITY = 90           # percent
 DEFAULT_COVERAGE = 90           # percent
+DEFAULT_NCBI_WORD_SIZE = 11     # number
 DEFAULT_TIME_LIMIT = 200        # ms
 
 
@@ -48,10 +49,10 @@ class SearchThresholds:
                 format_value=lambda v: f"{int(v)}%",
             )
 
-            self._window_size = labeled_slider(
+            self._trim_window_size = labeled_slider(
                 "Trimming window size",
                 minimum=2, maximum=20, step=1,
-                value=DEFAULT_WINDOW_SIZE, 
+                value=DEFAULT_TRIM_WINDOW_SIZE, 
                 format_value=lambda v: f"{int(v)}"
             )
 
@@ -59,6 +60,13 @@ class SearchThresholds:
                 "Trimming lowest quality threshold",
                 minimum=10, maximum=30, step=1,
                 value=DEFAULT_QUALITY_THRESHOLD, 
+                format_value=lambda v: f"{int(v)}"
+            )
+
+            self._ncbi_word_size = labeled_slider(
+                "NCBI word size",
+                minimum=7, maximum=25, step=1,
+                value=DEFAULT_NCBI_WORD_SIZE,
                 format_value=lambda v: f"{int(v)}"
             )
 
@@ -78,8 +86,9 @@ class SearchThresholds:
             self._evalue.value = DEFAULT_EVALUE_EXPONENT
             self._identity.value = DEFAULT_IDENTITY
             self._coverage.value = DEFAULT_COVERAGE
-            self._window_size.value = DEFAULT_WINDOW_SIZE
+            self._trim_window_size.value = DEFAULT_TRIM_WINDOW_SIZE
             self._quality_threshold.value = DEFAULT_QUALITY_THRESHOLD
+            self._ncbi_word_size.value = DEFAULT_NCBI_WORD_SIZE
             self._time_limit.value = DEFAULT_TIME_LIMIT
             self._log("Using default search thresholds")
         else:
@@ -88,7 +97,7 @@ class SearchThresholds:
 
     def _update_slider_state(self) -> None:
         sliders_enabled = not self._use_defaults.value
-        for slider in (self._evalue, self._identity, self._coverage, self._window_size, self._quality_threshold, self._time_limit):
+        for slider in (self._evalue, self._identity, self._coverage, self._trim_window_size, self._quality_threshold, self._ncbi_word_size, self._time_limit):
             slider.set_enabled(sliders_enabled)
 
     # ---- What the page needs from this section
@@ -100,11 +109,12 @@ class SearchThresholds:
         if self._use_defaults.value:
             return []
         return [
-            str(int(self._window_size)),
+            str(int(self._trim_window_size)),
             str(int(self._quality_threshold)),
             f"1e{int(self._evalue.value)}",
             str(int(self._identity.value)),
             str(int(self._coverage.value)),
+            str(int(self._ncbi_word_size.value)),
             str(int(self._time_limit)),
         ]
 
@@ -124,5 +134,5 @@ class SearchThresholds:
         if enabled:
             self._update_slider_state()   # restore based on the checkbox
         else:
-            for slider in (self._evalue, self._identity, self._coverage, self._window_size, self._quality_threshold, self._time_limit):
+            for slider in (self._evalue, self._identity, self._coverage, self._trim_window_size, self._quality_threshold, self._ncbi_word_size, self._time_limit):
                 slider.set_enabled(False)

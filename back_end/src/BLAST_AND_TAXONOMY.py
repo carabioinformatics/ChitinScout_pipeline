@@ -89,11 +89,12 @@ def main():
     f_e_value_threshold = float(sys.argv[5])
     identity_threshold = float(sys.argv[6])
     coverage_threshold = float(sys.argv[7])
+    ncbi_word_size = float(sys.argv[8])
     if (f_e_value_threshold == None):
         f_e_value_threshold = 0.001
-    final_directory_extension = sys.argv[8]
-    blast_directory_extension = sys.argv[9]
-    comparison_directory_extension = sys.argv[10]
+    final_directory_extension = sys.argv[9]
+    blast_directory_extension = sys.argv[10]
+    comparison_directory_extension = sys.argv[11]
     ######################### Starting values #################################
     # i_name_start = 0
     # i_name_end = 0
@@ -136,7 +137,7 @@ def main():
     total_unite_hits = 0
     if (database_mode != 2):
         ncbi_start_time = time.perf_counter()
-        arr_hits_ncbi, total_ncbi_hits = ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_counter_ncbi, s_secondary_database_ncbi, f_e_value_threshold, identity_threshold, coverage_threshold, taxonomy_mode)
+        arr_hits_ncbi, total_ncbi_hits = ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_counter_ncbi, s_secondary_database_ncbi, f_e_value_threshold, identity_threshold, coverage_threshold, ncbi_word_size, taxonomy_mode)
         ncbi_end_time = time.perf_counter()
     if (database_mode != 1):
         unite_start_time = time.perf_counter()
@@ -181,7 +182,7 @@ def main():
     else:
         return 0
 
-def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_counter_ncbi, s_secondary_database_ncbi, f_e_value_threshold, identity_threshold, coverage_threshold, taxonomy_mode):
+def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_counter_ncbi, s_secondary_database_ncbi, f_e_value_threshold, identity_threshold, coverage_threshold, ncbi_word_size, taxonomy_mode):
     """
         This method handles all computation related to BLASTn searching on the NCBI database. First does a 
         blastn search and then builds up a summary report that can report the taxonomy found in the search.
@@ -191,7 +192,7 @@ def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_c
     counter = 0
     arr_hits_ncbi = []
     obj_hit = None
-    blastn_ncbi(s_input_file, s_blast_complete_ncbi, f_e_value_threshold)
+    blastn_ncbi(s_input_file, s_blast_complete_ncbi, f_e_value_threshold, ncbi_word_size)
     ############ Make summary of BLASTn report using NCBI DATABASE #########
     with open(s_blast_summary_ncbi, "w") as summary_out:
         with open(s_blast_complete_ncbi) as result_handle:
@@ -219,16 +220,7 @@ def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_c
                                     secondary_database_output.write(f"%Identity: {((hsp.identities/hsp.align_length)*100):.4f}\t\t")
                                     secondary_database_output.write(f"%Coverage: {((hsp.align_length/record.query_length) * 100):.4f}\n")
                                 secondary_database_output.close()
-                            # accession = alignment.accession
-                            # tax_record = get_taxonomy_ncbi(accession)
-                            # taxonomy = parse_taxonomy_ncbi(tax_record)
-                            # print("CL: NCBI taxonomy done")
-                            # if ((taxonomy != None)):
-                            #     summary_out.write(f"Accession: {alignment.accession}\t\t")
-                            #     summary_out.write(f"Species: {taxonomy['species']}\t\t\t\t")
-                            #     summary_out.write(f"E-value: {hsp.expect}\n")
-                            # else: 
-                            #     print("taxonomy == NONE")
+
                             obj_hit = find_hit_obj_in_arr(arr_hits_ncbi, species)
                             if (obj_hit == None):
                                 obj_hit = add_new_obj(species, 0, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100)
@@ -321,13 +313,22 @@ def unite(s_input_file, s_blast_summary_unite, s_blast_complete_unite, s_taxonom
     #         print(arr_hits_unite[a].get_bit_score(y))
     return arr_hits_unite, counter
 
-def blastn_ncbi(s_input_file, s_blast_complete, f_e_value_threshold):
+def blastn_ncbi(s_input_file, s_blast_complete, f_e_value_threshold, ncbi_word_size):
     """
         Does the BLASTn search online using the NCBI database.
     """
+    print("word_size: ", ncbi_word_size)
+    print(int(ncbi_word_size))
     record = SeqIO.read(s_input_file, format="fasta")
     try:
-        result_handle = NCBIWWW.qblast("blastn", "nt", record.seq)
+        result_handle = NCBIWWW.qblast(
+            program="blastn", 
+            database="nt", 
+            sequence=record.seq,
+            word_size=int(ncbi_word_size),
+            megablast=False,
+            entrez_query='"Fungi"[Organism] NOT uncultured[Title]',
+        )
         #result_handle = NCBIWWW.qblast(program="blastn", database="rRNA_typestrains/ITS_RefSeq_Fungi", sequence=record.seq)
     except URLError as e:
         sys.stderr.write("Error: Connection error occured\n")

@@ -15,7 +15,8 @@ quality_threshold=${4:-20}
 e_value_threshold=${5:-1e-15}
 identity_threshold=${6:-90}
 coverage_threshold=${7:-90}
-time_limit=${8:-200}
+ncbi_word_size=${8:-11}
+time_limit=${9:-200}
 
 pipeline_report="./Output/$today_date/INT26_PIPELINE_REPORT.txt"
 echo -e "Pipeline started" > "$pipeline_report"
@@ -99,7 +100,7 @@ process_sample() {
     
     # Run BLAST script
     BLAST_start_time=$(date +%s.%N)
-    timeout "$time_limit" python3 ./src/BLAST_AND_TAXONOMY.py ./Output/$today_date/$sample_name/BLAST/$consensus_name "$sample_name" "$taxonomy_mode" "$database_mode" "$e_value_threshold" "$identity_threshold" "$coverage_threshold" "$final_attachment" "$blast_attachment" "$comparison_attachment"
+    timeout "$time_limit" python3 ./src/BLAST_AND_TAXONOMY.py ./Output/$today_date/$sample_name/BLAST/$consensus_name "$sample_name" "$taxonomy_mode" "$database_mode" "$e_value_threshold" "$identity_threshold" "$coverage_threshold" "$ncbi_word_size" "$final_attachment" "$blast_attachment" "$comparison_attachment"
     blast_return_code=$?
     BLAST_end_time=$(date +%s.%N)
 
