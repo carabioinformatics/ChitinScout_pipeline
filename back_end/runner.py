@@ -14,6 +14,9 @@ SAMPLE_LIST_ENV_VAR = "SAMPLE_LIST_FILE"
 
 PROGRESS_PATTERN = re.compile(r"\((\d+)/(\d+) samples\)")
 PLOT_PATTERN = re.compile(r"^PLOT_FILE:\s*(.+)$")
+# Marker lines printed by the pipeline scripts (see pipeline_status.py)
+STEP_PATTERN = re.compile(r"^@@STEP\|([^|]*)\|([^|]*)\|([^|]*)\|?(.*)$")
+SAMPLE_ERROR_PATTERN = re.compile(r"^@@SAMPLE_ERROR\|([^|]*)\|(.*)$")
 
 class PipelineRunner:
     """Runs ./run.sh and can stop it, including everything it started."""
@@ -39,7 +42,9 @@ class PipelineRunner:
         on_start: Optional[Callable[[], None]] = None,
         on_output: Optional[Callable[[str], None]] = None,
         on_progress: Optional[Callable[[int, int], None]] = None,
-        on_plot: Optional[Callable[[Path], None]] = None
+        on_plot: Optional[Callable[[Path], None]] = None,
+        on_step: Optional[Callable[[str, str, str, str], None]] = None,
+        on_sample_error: Optional[Callable[[str, str], None]] = None      
     ) -> int:
         """Run ./run.sh <primer_mode> [extra_args...] and return its exit code."""
         self._stopped_by_user = False
@@ -64,6 +69,17 @@ class PipelineRunner:
             async for raw_line in self._process.stdout:
                 # The script's progress line starts with a carriage return
                 line = raw_line.decode(errors="replace").rstrip().lstrip("\r")
+                step_match = STEP_PATTERN.match(line)
+                if step_match:
+                    if on_step:
+                        on_step(*step_match.groups())
+                    continue
+                error_match = SAMPLE_ERROR_PATTERN.match(line)
+                if error_match:
+                    if on_sample_error:
+                        on_sample_error(*error_match.groups())
+                    continue  
+                              
                 if on_output:
                     on_output(line)
                 if on_progress:

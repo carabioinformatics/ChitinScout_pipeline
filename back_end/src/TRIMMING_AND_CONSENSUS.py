@@ -1,3 +1,7 @@
+import os
+from pipeline_status import report_step
+
+sample = os.environ.get("CURRENT_SAMPLE", "")
 import sys
 import time
 from datetime import datetime
@@ -48,6 +52,7 @@ def main():
     ############################# Trimming #####################################
     # window_size = 7 #between 5 - 10: good for short reads, 10-20 smoother, more conservative
     # quality_threshold = 20 #Could go up to 30 for stricter trimming; 20 standard
+    report_step(sample, "trimming", "running")
     forward_record = SeqIO.read(s_forward_file, "abi")
     reverse_record = SeqIO.read(s_reverse_file, "abi")
     initial_forward_length = len(forward_record.seq)
@@ -58,6 +63,7 @@ def main():
     trimmed_forward_length = len(trimmed_forward_record)
     trimmed_reverse_record = SeqIO.read(s_reverse_trim_output_fasta, "fasta")
     trimmed_reverse_length = len(trimmed_reverse_record)
+    report_step(sample, "trimming", "done")
     print("CL: Trimming complete.")
     ################ Get reverse complement of reverse sequence ################
     REVERSE_COMPLEMENT_AND_ALIGNMENT.get_reverse_complement_fastq(s_reverse_trim_output_fastq, s_reverse_complement_output_file_fastq)
@@ -65,9 +71,12 @@ def main():
     records_dict = {s_sample_name + "_" + s_forward_primer_name + "__": s_forward_trim_output_fastq, s_sample_name + "_" + s_reverse_primer_name + "___RC": s_reverse_complement_output_file_fastq}
     print("CL: Reverse complement completed.")
     ####################### Make alignment using CrustalO ######################
+    report_step(sample, "alignment", "running")
     REVERSE_COMPLEMENT_AND_ALIGNMENT.align_sequences(s_sample_name, s_forward_trim_output_fasta, s_reverse_complement_output_file_fasta, s_alignment_output_file, s_combined_file)
+    report_step(sample, "alignment", "done")
     print("CL: Alignment completed.")
     ########################### Make consensus sequence ########################
+    report_step(sample, "consensus", "running")
     alignment_record = AlignIO.read(s_alignment_output_file, "fasta")
     consensus_sequence = consensus(alignment_record, records_dict, quality_threshold)
     consensus_record = SeqRecord(
@@ -77,6 +86,7 @@ def main():
     )
     consensus_length = len(consensus_sequence)
     SeqIO.write(consensus_record, s_consensus_file, "fasta")
+    report_step(sample, "consensus", "done")
     print("CL: Consensus completed.")
     ####################### Performance report #################################
     end_time = time.perf_counter()

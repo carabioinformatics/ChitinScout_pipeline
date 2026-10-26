@@ -1,3 +1,7 @@
+import os
+from pipeline_status import report_step
+
+sample = os.environ.get("CURRENT_SAMPLE", "")
 import sys
 import time
 from datetime import datetime

@@ -1,3 +1,7 @@
+import os
+from pipeline_status import report_step
+
+sample = os.environ.get("CURRENT_SAMPLE", "")
 import sys
 import time
 from datetime import datetime
@@ -163,11 +167,13 @@ def main():
     print("CL: BLAST search and taxonomy ending.")
     ###################### Comparison between databases ########################
     print("CL: Begin comparison between databases.")
+    report_step(sample, "interpretation", "running")
     comparison_start_time = time.perf_counter()
     print("CL: NCBI hits: " + str(len(arr_hits_ncbi)))
     print("CL: UNITE hits: " + str(len(arr_hits_unite)))
     comparison(s_comparison_report, s_comparison_graph, arr_hits_ncbi, arr_hits_unite, len(arr_hits_ncbi), len(arr_hits_unite))
     comparison_end_time = time.perf_counter()
+    report_step(sample, "interpretation", "done")
     with open(s_performance_report, "a") as performance_output:
         performance_output.write("------------------------------ Comparison report -------------------------------\n")
         performance_output.write(f"Date and time of comparison end:\t{datetime.now():%Y-%m-%d %H:%M}\n")
@@ -194,6 +200,7 @@ def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_c
     obj_hit = None
     blastn_ncbi(s_input_file, s_blast_complete_ncbi, f_e_value_threshold, ncbi_word_size)
     ############ Make summary of BLASTn report using NCBI DATABASE #########
+    report_step(sample, "summary", "running")
     with open(s_blast_summary_ncbi, "w") as summary_out:
         with open(s_blast_complete_ncbi) as result_handle:
             blast_records = NCBIXML.parse(result_handle)
@@ -237,6 +244,7 @@ def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_c
         for a in range(0, arr_hits_ncbi[t].get_num_hits()):
             score = calculate_score(arr_hits_ncbi[t].get_bit_score(a), arr_hits_ncbi[t].get_max_bit_score())
             arr_hits_ncbi[t].update_score(a, score)
+    report_step(sample, "summary", "done")
     print("CL: Done with BLASTn summary for NCBI.")
     ####################### Sort species with counts #################################
     sorted_table_tax_count = dict(sorted(table_tax_count.items(), key = lambda x: x[1], reverse=True))
@@ -317,8 +325,8 @@ def blastn_ncbi(s_input_file, s_blast_complete, f_e_value_threshold, ncbi_word_s
     """
         Does the BLASTn search online using the NCBI database.
     """
-    print("word_size: ", ncbi_word_size)
-    print(int(ncbi_word_size))
+    report_step(sample, "blast", "running")
+
     record = SeqIO.read(s_input_file, format="fasta")
     try:
         result_handle = NCBIWWW.qblast(
@@ -340,6 +348,8 @@ def blastn_ncbi(s_input_file, s_blast_complete, f_e_value_threshold, ncbi_word_s
     with open(s_blast_complete, "w") as out_handle:
         out_handle.write(result_handle.read())
     result_handle.close()
+
+    report_step(sample, "blast", "done")
     print("CL: Writing of complete NCBI BLASTn report done.")
     
 def blastn_unite(s_input_file, s_blast_complete):

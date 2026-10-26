@@ -11,6 +11,7 @@ from front_end.sections.search_thresholds import SearchThresholds
 from front_end.sections.file_picker import FilePicker
 from front_end.sections.time_plot import TimePlot
 from front_end.sections.input_upload import InputUpload
+from front_end.sections.sample_status_table import SampleStatusTable
 from front_end.theme import apply_theme
 
 # --- Status states ----------------------------------------------------
@@ -83,6 +84,7 @@ def home_page() -> None:
         set_inputs_enabled(False)
         output_log.clear()
         time_plot.hide()
+        status_table.reset(samples)
         set_status("starting")
         progress.update(0, len(samples))
 
@@ -103,6 +105,8 @@ def home_page() -> None:
                 on_output=log,
                 on_progress=progress.update,
                 on_plot=on_plot,
+                on_step=status_table.set_step,
+                on_sample_error=status_table.fail_current,
             )
             if runner.was_stopped:
                 log("Pipeline stopped by user. Click Run to start again.")
@@ -115,6 +119,7 @@ def home_page() -> None:
             log(f"Could not start pipeline: {error}")
             set_status("failed")
         finally:
+            status_table.halt()
             set_inputs_enabled(True)
 
     async def on_stop_click() -> None:
@@ -152,6 +157,8 @@ def home_page() -> None:
             text("Status", "label")
             status_display()
             progress = SampleProgress()
+
+        status_table = SampleStatusTable()
 
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
             text("Pipeline output", "label")
