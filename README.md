@@ -122,3 +122,7 @@ For updating UNITE database:
 
 ################# Running the pipeline from the terminal only ##################
 - Folow instructions in the README.md in the back_end folder
+
+####################### Important notes ################################
+- You can't just rename for example an input file. If you want to, you need to rename
+the file name and open the .ab file and rename the sequence as well with the same name.

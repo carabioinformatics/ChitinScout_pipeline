@@ -20,6 +20,7 @@ time_limit=${8:-200}
 pipeline_report="./Output/$today_date/INT26_PIPELINE_REPORT.txt"
 echo -e "Pipeline started" > "$pipeline_report"
 timing_report="./Output/$today_date/INT26_TIME_REPORT.txt"
+timing_plot="./Output/$today_date/INT26_TIME_REPORT_GRAPH.png"
 echo -e "Sample name\tCleanup time (s)\tBLAST time (s)\tTotal time (s)" > "$timing_report"
 
 # Function to process a sample
@@ -198,6 +199,10 @@ done
 echo -e "Pipeline ended" >> "$pipeline_report"
 echo "Pipeline finished"
 
-python3 ./src/TIME_REPORT_PLOTTING.py "$timing_report"
+python3 ./src/TIME_REPORT_PLOTTING.py "$timing_report" "$timing_plot"
+plot_file=$(ls -t "./Output/$today_date"/*.png "./Output/$today_date"/*.jpg 2>/dev/null | head -n 1)
+if [[ -n "$plot_file" ]]; then
+    echo "PLOT_FILE: $plot_file"
+fi
 echo "================================================="
 echo "End main run script"
