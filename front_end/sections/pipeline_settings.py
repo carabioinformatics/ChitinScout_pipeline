@@ -1,15 +1,13 @@
-"""Pipeline settings section: primer, taxonomy mode and database mode."""
 from typing import Callable, Optional
-
 from nicegui import ui
 from front_end.components.dropdown_comp import dropdown
 from front_end.components.text_comp import text
 
-# value passed to run.sh -> label shown to the user.
-# Replace the taxonomy/database labels with the real names of your modes.
 PRIMERS = {
     0: "ITS1 + ITS4 primers",
     1: "TEF forward and reverse primers",
+    2: "LSU forward and reverse primers",
+    3: "B-Tub forward and reverse primers",
 }
 TAXONOMY_MODES = {
     0: "Just a BLAST search and summary",

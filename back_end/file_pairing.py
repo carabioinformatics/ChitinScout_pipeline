@@ -11,6 +11,8 @@ INPUT_DIR = Path(__file__).resolve().parent / "Input"
 PRIMER_SUFFIXES = {
     0: ("ITS1___1.ab1", "ITS4___1.ab1"),
     1: ("TEF_forward___1.ab1", "TEF_reverse___1.ab1"), 
+    2: ("LSU_forward___1.ab1", "LSU_reverse___1.ab1"),
+    3: ("B-Tub_forward___1.ab1", "B-Tub_reverse___1.ab1"),
 }
 
 
