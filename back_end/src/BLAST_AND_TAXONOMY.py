@@ -15,7 +15,8 @@ import re
 import numpy
 import pandas as pd
 import matplotlib.pyplot as plt
-Entrez.email = "26869993@sun.ac.za"
+from back_end.user_config import get_email
+Entrez.email = get_email()
 
 class Hit:
     def __init__(self, species, database_type, num_of_hits):

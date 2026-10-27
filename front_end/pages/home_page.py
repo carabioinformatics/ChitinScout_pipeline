@@ -3,6 +3,7 @@ import asyncio
 
 from nicegui import app, ui
 from back_end.runner import PipelineRunner
+from back_end.user_config import get_email, set_email, is_valid_email
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
 from front_end.components.progress_bar_comp import SampleProgress
@@ -150,18 +151,24 @@ def home_page() -> None:
         await asyncio.sleep(0.5)         # let the message reach the browser
         app.shutdown()
 
-    async def on_save_email() -> None:
-        confirm_email.close
+    def on_email_save() -> None:
+        if not email_input.validate():
+            return
+        set_email(email_input.value)
+        email_dialog.close()
+        log(f"Entrez email set to {get_email}")
 
     # ---- Layout
     with ui.column().classes("w-full max-w-6xl mx-auto gap-6 p-8"):
-
+        saved_email = get_email()
+        email_msg = ("Email used for Entrez queries: ",saved_email)
         with ui.column().classes("gap-1"):
             text("Welcome to ChitinScout", "title")
             text(
                 "Choose your settings below and start the sequencing pipeline.",
                 "description",
             )
+            text(email_msg, "description")
 
         settings = PipelineSettings(log=log, on_change=on_settings_change)
         thresholds = SearchThresholds(log=log)
@@ -201,11 +208,6 @@ def home_page() -> None:
             )
 
     # ---- Dialogs (hidden until opened)
-    with ui.dialog() as confirm_email, ui.card().classes("p-6 gap-4"):
-        text("Please enter your email address. This is the email address that will be used to make Entrez queries.")
-
-        button("Save", on_save_email, variant="secondary")
-
     with ui.dialog() as confirm_dialog, ui.card().classes("p-6 gap-4"):
         text("Quit the application?", "body")
         text("Any running pipeline will be stopped.", "description")
@@ -216,3 +218,23 @@ def home_page() -> None:
     with ui.dialog().props("persistent") as goodbye_dialog, ui.card().classes("p-6 gap-2"):
         text("Application stopped", "body").classes("font-semibold")
         text("You can now close this tab.", "description")
+
+    # Email dialog: can't be dismissed until a valid email is saved
+    with ui.dialog().props("persistent") as email_dialog, \
+            ui.card().classes("p-6 gap-4 w-96"):
+        text("Welcome to ChitinScout", "body").classes("font-semibold")
+        text(
+            "NCBI requires an email address for Entrez queries. "
+            "It is stored on this computer and only sent to NCBI.",
+            "description",
+        )
+        email_input = ui.input(
+            "Email address",
+            validation={"Please enter a valid email address": is_valid_email},
+        ).classes("w-full")
+        email_input.on("keydown.enter", on_email_save)
+        with ui.row().classes("w-full justify-end"):
+            button("Save", on_email_save, icon="save")
+
+    if not get_email():
+        email_dialog.open()
