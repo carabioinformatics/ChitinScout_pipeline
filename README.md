@@ -65,7 +65,11 @@ Samples were collected from different Ostrich farms and egg incubation rooms and
 |   |   |-- search_thresholds.py
 |   |   |-- time_plot.py
 
-########### Download/sofware requirements #################
+########### Download/sofware requirements ################
+- Project needs to be run in a Linux terminal. You can download the Ubuntu terminal from the Windows store
+and follow the onscreen instructions to download.
+- Once the terminal is open, you can navigate to the place where you cloned the project and then from there set
+up the environment and run the program. 
 - All of this can get set up by following the environment set up instructions
 - Python 3.10 worked best for me
 - Biopython
@@ -102,6 +106,9 @@ For updating UNITE database:
 |-- ...
 
 ################## Setting up your conda environment ################
+- Important you first need to download Miniconda before you can set up the environment. You can follow 
+the instructions at https://www.anaconda.com/docs/getting-started/miniconda/install/windows-gui-install to do this.
+- The Linux version needs to be installed into the Ubuntu terminal
 - You need an internet connection for this
 - In the root directory
 - The first time, type this in the Ubuntu terminal

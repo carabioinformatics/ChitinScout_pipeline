@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
   - defaults
-defaults:
+dependencies:
   - python=3.10
   - biopython
   - clustalo

@@ -150,6 +150,9 @@ def home_page() -> None:
         await asyncio.sleep(0.5)         # let the message reach the browser
         app.shutdown()
 
+    async def on_save_email() -> None:
+        confirm_email.close
+
     # ---- Layout
     with ui.column().classes("w-full max-w-6xl mx-auto gap-6 p-8"):
 
@@ -198,6 +201,11 @@ def home_page() -> None:
             )
 
     # ---- Dialogs (hidden until opened)
+    with ui.dialog() as confirm_email, ui.card().classes("p-6 gap-4"):
+        text("Please enter your email address. This is the email address that will be used to make Entrez queries.")
+
+        button("Save", on_save_email, variant="secondary")
+
     with ui.dialog() as confirm_dialog, ui.card().classes("p-6 gap-4"):
         text("Quit the application?", "body")
         text("Any running pipeline will be stopped.", "description")
