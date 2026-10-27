@@ -38,15 +38,12 @@ class SampleStatusTable:
     def _build(self) -> None:
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3") as self._card:
             text("Sample progress", "label")
-            with ui.scroll_area().classes("w-full h-72"):
+            with ui.element("div").classes("w-full max-h-72 overflow-auto"):
                 self._grid = ui.grid(
-                    columns=f"8rem repeat({len(STEPS)}, minmax(5rem, 1fr)) 6.5rem"
-                ).classes("w-full gap-x-2 gap-y-1 items-center")
-                with ui.element("div").classes("w-full max-h-72 overflow-auto"):
-                    self._grid = ui.grid(
-                        columns=f"9rem repeat({len(STEPS)}, 6rem) 7rem"
-                    ).classes("min-w-max gap-x-2 gap-y-1 items-center")            
-                text("Click a red cross to see why a step failed.", "description")
+                    columns=f"9rem repeat({len(STEPS)}, 6rem) 7rem"
+                ).classes("min-w-max gap-x-2 gap-y-1 items-center")
+            text("Click a red cross to see why a step failed.", "description")
+        self._card.set_visibility(False)        
         self._card.set_visibility(False)   # hidden until a run starts
 
         # One shared error dialog, filled in when a red cross is clicked
@@ -113,7 +110,8 @@ class SampleStatusTable:
             text("Sample", "label")
             for _, label in STEPS:
                 text(label, "label").classes("text-center")
-            for sample in samples:
+            text("Results", "label").classes("text-center")
+            for sample in samples:                
                 text(sample, "body").classes("truncate")
                 for step_id, _ in STEPS:
                     key = (sample, step_id)
