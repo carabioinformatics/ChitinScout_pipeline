@@ -27,11 +27,11 @@ case $primer_mode in
         ;;
     2)
         echo "Running LSU pipeline..."
-        bash ./generalrun.sh LSU_forward___1.ab1 LSU_reverse___1.ab1 "$@"
+        bash ./allprimersrun.sh LSU_forward___1.ab1 LSU_reverse___1.ab1 "$@"
         ;;
     3)
         echo "Running B-Tub pipeline..."
-        bash ./generalrun.sh B-Tub_forward___1.ab1 B-Tub_forward___1.ab1 "$@"
+        bash ./allprimersrun.sh B-Tub_forward___1.ab1 B-Tub_reverse___1.ab1 "$@"
         ;;
     *)
         echo "Error: invalid region '$primer_mode'. Use 0 - 3 for different modes."

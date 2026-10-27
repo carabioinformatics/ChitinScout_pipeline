@@ -107,7 +107,7 @@ def main():
         performance_output.write("--------------------- Trimming, alignment and consensus ---------------------\n")
     performance_output.close()
     print("CL: Trimming and consensus ending.")
-    if ((initial_forward_length/trimmed_forward_length > 0.5) and (initial_reverse_length/trimmed_reverse_length) and (consensus_length > 500)):
+    if ((trimmed_forward_length/initial_forward_length > 0.5) and (trimmed_reverse_length/initial_reverse_length > 0.5)):
         return 0
     else:
         return 2

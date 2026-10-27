@@ -103,6 +103,7 @@ process_sample() {
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Unknown exit code for $sample_name" >> "$pipeline_report"
             report_error "$sample_name" "Unknown exit code $trimming_return_code."            return
+            return
             ;;
     esac
     
