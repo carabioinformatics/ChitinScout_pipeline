@@ -4,6 +4,7 @@ from pipeline_status import report_step
 sample = os.environ.get("CURRENT_SAMPLE", "")
 import sys
 import time
+from pathlib import Path
 from datetime import datetime
 import subprocess
 from Bio.Blast import NCBIWWW
@@ -15,6 +16,7 @@ import re
 import numpy
 import pandas as pd
 import matplotlib.pyplot as plt
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from back_end.user_config import get_email
 Entrez.email = get_email()
 

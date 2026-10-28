@@ -6,6 +6,7 @@ import signal
 import tempfile
 from pathlib import Path
 from typing import Callable, Optional, Sequence
+from back_end.user_config import get_email
 
 # Folder containing run.sh, ITSrun.sh and TEFrun.sh
 SCRIPT_DIR = Path(__file__).resolve().parent

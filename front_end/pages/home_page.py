@@ -32,6 +32,15 @@ STATUS = {
 
 def home_page() -> None:
     apply_theme()
+    ui.add_css("""
+        body {
+            background-image: url('/assets/background.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+    """)
 
     state = {"status": "waiting", "output_dir": None, "run_primer": None}    
     runner = PipelineRunner()
@@ -161,8 +170,8 @@ def home_page() -> None:
     # ---- Layout
     with ui.column().classes("w-full max-w-6xl mx-auto gap-6 p-8"):
         saved_email = get_email()
-        email_msg = ("Email used for Entrez queries: ",saved_email)
-        with ui.column().classes("gap-1"):
+        email_msg = f"Email used for Entrez queries: {saved_email}"        
+        with ui.column().classes("gap-1 w-full bg-white rounded-xl p-4"):
             text("Welcome to ChitinScout", "title")
             text(
                 "Choose your settings below and start the sequencing pipeline.",
@@ -204,7 +213,7 @@ def home_page() -> None:
 
             quit_button = button(
                 "Quit application", lambda: confirm_dialog.open(),
-                variant="secondary", icon="power_settings_new",
+                 icon="power_settings_new",
             )
 
     # ---- Dialogs (hidden until opened)
