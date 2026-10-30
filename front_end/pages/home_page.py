@@ -172,7 +172,7 @@ def home_page() -> None:
         saved_email = get_email()
         email_msg = f"Email used for Entrez queries: {saved_email}"        
         with ui.column().classes("gap-1 w-full bg-white rounded-xl p-4"):
-            text("Welcome to ChitinScout", "title")
+            text("Welcome to Fungi SporeOver Pipeline", "title")
             text(
                 "Choose your settings below and start the sequencing pipeline.",
                 "description",

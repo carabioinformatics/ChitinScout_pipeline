@@ -22,11 +22,12 @@ def main():
     ############################ Arguments #####################################
     s_forward_file = sys.argv[1]
     s_reverse_file = sys.argv[2]
-    window_size = int(sys.argv[3])            #between 5 - 10: good for short reads, 10-20 smoother, more conservative
-    quality_threshold = int(sys.argv[4])      #Could go up to 30 for stricter trimming; 20 standard
-    cleanup_directory_extension = sys.argv[5]
-    final_directory_extension = sys.argv[6]
-    blast_directory_extension = sys.argv[7]
+    max_trimming = int(sys.argv[3])
+    window_size = int(sys.argv[4])            #between 5 - 10: good for short reads, 10-20 smoother, more conservative
+    quality_threshold = int(sys.argv[5])      #Could go up to 30 for stricter trimming; 20 standard
+    cleanup_directory_extension = sys.argv[6]
+    final_directory_extension = sys.argv[7]
+    blast_directory_extension = sys.argv[8]
     #################### Establish how files will be named #####################
     i_name_start = s_forward_file.find("_") + 1
     i_name_end = s_forward_file.find("_", i_name_start)
@@ -107,7 +108,7 @@ def main():
         performance_output.write("--------------------- Trimming, alignment and consensus ---------------------\n")
     performance_output.close()
     print("CL: Trimming and consensus ending.")
-    if ((trimmed_forward_length/initial_forward_length > 0.5) and (trimmed_reverse_length/initial_reverse_length > 0.5)):
+    if (((trimmed_forward_length/initial_forward_length)*100 > max_trimming) and ((trimmed_reverse_length/initial_reverse_length)*100 > max_trimming)):
         return 0
     else:
         return 2

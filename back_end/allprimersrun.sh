@@ -13,13 +13,14 @@ mkdir -p "./Output/$today_date"
 echo "@@OUTPUT_DIR|./Output/$today_date"
 
 # Set thresholds for search specificity, can be changed
-window_size=${5:-5}
-quality_threshold=${6:-20}
-e_value_threshold=${7:-1e-15}
-identity_threshold=${8:-90}
-coverage_threshold=${9:-90}
-ncbi_word_size=${10:-11}
-time_limit=${11:-200}
+max_trimming=${5:-50}
+window_size=${6:-5}
+quality_threshold=${7:-20}
+e_value_threshold=${8:-1e-15}
+identity_threshold=${9:-90}
+coverage_threshold=${10:-90}
+ncbi_word_size=${11:-11}
+time_limit=${12:-200}
 
 pipeline_report="./Output/$today_date/INT26_PIPELINE_REPORT.txt"
 echo -e "Pipeline started" > "$pipeline_report"
@@ -69,7 +70,7 @@ process_sample() {
     
     # Run trimming script
     cleanup_start_time=$(date +%s.%N)
-    timeout "$time_limit" python3 ./src/TRIMMING_AND_CONSENSUS.py "$forward" "$reverse" "$window_size" "$quality_threshold" "$cleanup_attachment" "$final_attachment" "$blast_attachment"
+    timeout "$time_limit" python3 ./src/TRIMMING_AND_CONSENSUS.py "$forward" "$reverse" "$max_trimming" "$window_size" "$quality_threshold" "$cleanup_attachment" "$final_attachment" "$blast_attachment"
     trimming_return_code=$?
     cleanup_end_time=$(date +%s.%N)
     

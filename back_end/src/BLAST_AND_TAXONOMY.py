@@ -338,7 +338,7 @@ def blastn_ncbi(s_input_file, s_blast_complete, f_e_value_threshold, ncbi_word_s
             sequence=record.seq,
             word_size=int(ncbi_word_size),
             megablast=False,
-            entrez_query='"Fungi"[Organism] NOT uncultured[Title]',
+            entrez_query='"Penicillium"[Organism] NOT uncultured[Title]',
         )
         #result_handle = NCBIWWW.qblast(program="blastn", database="rRNA_typestrains/ITS_RefSeq_Fungi", sequence=record.seq)
     except URLError as e:

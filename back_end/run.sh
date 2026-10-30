@@ -19,11 +19,13 @@ shift
 case $primer_mode in
     0)
         echo "Running ITS pipeline..."
-        bash ./ITSrun.sh "$@"
+        bash ./allprimersrun.sh ITS1___1.ab1 ITS4___1.ab1 "$@"
+        # bash ./ITSrun.sh "$@"
         ;;
     1)
         echo "Running TEF pipeline..."
-        bash ./TEFrun.sh "$@"
+        bash ./allprimersrun.sh TEF_forward___1.ab1 TEF_reverse___1.ab1 "$@"
+        # bash ./TEFrun.sh "$@"
         ;;
     2)
         echo "Running LSU pipeline..."
