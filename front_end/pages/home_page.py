@@ -196,7 +196,7 @@ def home_page() -> None:
             on_view_results=show_results,
             on_close_results=lambda: results_panel.hide(),
         )
-        results_panel = ResultsPanel()
+        results_panel = ResultsPanel("./INT26_CHOSEN_SPECIES.xlsx")
 
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-3"):
             text("Pipeline output", "label")

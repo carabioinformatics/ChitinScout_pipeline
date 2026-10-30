@@ -15,6 +15,7 @@ COLUMNS = [
      "align": "right", "sortable": True},
     {"name": "identity", "label": "Identity (%)", "field": "identity",
      "align": "right", "sortable": True},
+    {"name": "actions", "label": "Decision", "field": "decision", "align": "center"},
 ]
 
 ACTIONS_SLOT = r"""
@@ -26,7 +27,7 @@ ACTIONS_SLOT = r"""
            @click="() => $parent.$emit('decide', {id: props.row.id, decision: 'declined'})" />
   </template>
   <span v-else :class="props.row.decision === 'accepted' ? 'text-positive' : 'text-grey-6'">
-    {{ props.row.decision === 'accepted' ? 'Accepted' : 'Declined' }}
+    {{ props.row.decision === 'accepted' ? 'Already accepted' : 'Already declined' }}
   </span>
 </q-td>
 """
@@ -98,6 +99,7 @@ class ResultsPanel:
                         "species": hit.species,
                         "coverage": round(hit.coverage, 1) if hit.coverage is not None else "",
                         "identity": round(hit.identity, 1) if hit.identity is not None else "",
+                        "decision": self._decisions.get((sample, hit.accession, hit.species), ""),                    
                     }
                     for index, hit in enumerate(hits)
                 ]
@@ -129,6 +131,7 @@ class ResultsPanel:
                 ui.notify(f"{row['species']} was already saved for {sample}.", type="info")
         row["decision"] = decision
         self._decisions[(sample, row["accession"], row["species"])] = decision
+        table.rows[:] = rows
         table.update()
 
     def hide(self) -> None:
