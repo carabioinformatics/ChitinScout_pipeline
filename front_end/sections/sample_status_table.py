@@ -1,6 +1,7 @@
 """Sample status table: one row per sample, one column per pipeline step."""
 from nicegui import ui
 from typing import Callable, Optional
+from pathlib import Path
 from back_end.pipeline_steps import STEPS
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text

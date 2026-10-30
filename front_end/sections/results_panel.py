@@ -1,11 +1,10 @@
 """Results panel: the top BLAST hits for one sample, shown below the status table."""
 from pathlib import Path
 from typing import Optional
-
 from nicegui import ui
-
 from back_end.results import ResultsNotFound, find_input_files, load_top_results
 from front_end.components.text_comp import text
+from back_end.accepted_species import add_accepted
 
 COLUMNS = [
     {"name": "accession", "label": "Accession number", "field": "accession",
@@ -18,15 +17,33 @@ COLUMNS = [
      "align": "right", "sortable": True},
 ]
 
+ACTIONS_SLOT = r"""
+<q-td :props="props" class="text-center">
+  <template v-if="!props.row.decision">
+    <q-btn flat dense no-caps color="positive" icon="check" label="Accept"
+           @click="() => $parent.$emit('decide', {id: props.row.id, decision: 'accepted'})" />
+    <q-btn flat dense no-caps color="negative" icon="close" label="Decline"
+           @click="() => $parent.$emit('decide', {id: props.row.id, decision: 'declined'})" />
+  </template>
+  <span v-else :class="props.row.decision === 'accepted' ? 'text-positive' : 'text-grey-6'">
+    {{ props.row.decision === 'accepted' ? 'Accepted' : 'Declined' }}
+  </span>
+</q-td>
+"""
 
 class ResultsPanel:
     """A card that is hidden until show() is called."""
 
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            accepted_species_file_name: str,
+        ) -> None:
+        self._accepted_species_file_name = accepted_species_file_name
         self._card = ui.card().classes("w-full rounded-xl shadow-md p-6 gap-4")
         with self._card:
             self._content = ui.column().classes("w-full gap-4")
         self._card.set_visibility(False)
+        self._decisions: dict[tuple[str, str, str], str] = {}
 
     def show(
         self,
@@ -84,11 +101,35 @@ class ResultsPanel:
                     }
                     for index, hit in enumerate(hits)
                 ]
-                ui.table(columns=COLUMNS, rows=rows, row_key="id").props(
+                table = ui.table(columns=COLUMNS, rows=rows, row_key="id").props(
                     "flat bordered dense"
                 ).classes("w-full")
+                table.add_slot("body-cell-actions", ACTIONS_SLOT)
+                table.on("decide", lambda e: self._decide(e.args, table, rows, sample, output_dir))
 
         self._card.set_visibility(True)
+
+    def _decide(self, args: dict, table: ui.table, rows: list[dict],
+                sample: str, output_dir: Path) -> None:
+        row = rows[args["id"]]
+        if row["decision"]:
+            return
+        decision = args["decision"]
+
+        if decision == "accepted":
+            try:
+                added = add_accepted(output_dir/self._accepted_species_file_name, sample, row["species"])
+            except PermissionError:
+                ui.notify(f"Cannot write to {self._accepted_species_file_name}. Is it open in Excel?", type="negative")
+                return
+            except Exception as problem:
+                ui.notify(f"Could not save: {problem}", type="negative")
+                return
+            if not added:
+                ui.notify(f"{row['species']} was already saved for {sample}.", type="info")
+        row["decision"] = decision
+        self._decisions[(sample, row["accession"], row["species"])] = decision
+        table.update()
 
     def hide(self) -> None:
         self._card.set_visibility(False)
