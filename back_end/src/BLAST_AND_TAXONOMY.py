@@ -25,6 +25,8 @@ class Hit:
         self.species = species
         self.database_type = database_type #0 - NCBI, 1 - UNITE
         self.num_hits = num_of_hits
+        self.arr_hit_seq = []
+        self.arr_accession_numbers = []
         self.arr_bit_scores = []
         self.max_bit_score = 0
         self.arr_coverage = []
@@ -68,6 +70,14 @@ class Hit:
         self.arr_coverage.append(temp_coverage)
     def add_identity(self, temp_identity):
         self.arr_identity.append(temp_identity)
+    def add_hit_seq(self, temp_hit_seq):
+        self.arr_hit_seq.append(temp_hit_seq)
+    def add_accession_number(self, temp_accession_number):
+        self.arr_accession_numbers.append(temp_accession_number)
+    def get_arr_hit_seq(self):
+        return self.arr_hit_seq
+    def get_arr_accession_number(self):
+        return self.arr_accession_numbers
 
 def main():
     """
@@ -130,6 +140,7 @@ def main():
         s_secondary_database_ncbi = final_directory_extension + "/INT26_" + s_file_identifier + "_REFSEQ_HITS.txt"
         s_taxonomy_counter_ncbi = final_directory_extension + "/INT26_" + s_file_identifier + "_TAXONOMY_COUNTER_NCBI.xml"
         s_taxonomy_counter_unite = final_directory_extension + "/INT26_" + s_file_identifier + "_TAXONOMY_COUNTER_UNITE.xml"
+        s_hit_seq_report = final_directory_extension + "/INT26_" + s_file_identifier + "_HIT_SEQUENCE_SUMMARY.txt"
         s_performance_report = final_directory_extension + "/INT26_" + s_file_identifier + "_PERFORMANCE_REPORT.txt"
         s_comparison_report = comparison_directory_extension + "/INT26_" + s_file_identifier + "_COMPARISON_REPORT.txt"
         s_comparison_graph = comparison_directory_extension + "/INT26_" + s_file_identifier + "_COMPARISON_GRAPH.png"
@@ -168,6 +179,21 @@ def main():
         #performance_output.write("Computer where search was run: " + socket.gethostbyname())
     performance_output.close()
     print("CL: BLAST search and taxonomy ending.")
+    ###################### Hit seq comparison document #####################
+    print("CL: Starting with printing NCBI summary sequences.")
+    consensus_record = SeqIO.read(s_input_file, format="fasta")
+    with open(s_hit_seq_report, "a") as hit_seq_output:
+        hit_seq_output.write(f"Accession: query\t\t")
+        hit_seq_output.write(f"Sequence: {consensus_record.seq}\n")
+
+        for i in range(len(arr_hits_ncbi)):
+            temp_array_hit_seq = arr_hits_ncbi[i].get_arr_hit_seq()
+            temp_array_accession_no = arr_hits_ncbi[i].get_arr_accession_number()
+            for j in range(0, len(temp_array_hit_seq)):
+                hit_seq_output.write(f"Accession: {temp_array_accession_no[j]}\t\t")
+                hit_seq_output.write(f"Sequence: {temp_array_hit_seq[j]}\n")
+    hit_seq_output.close()
+    print("CL: All sequences of NCBI summary has been printed.")
     ###################### Comparison between databases ########################
     print("CL: Begin comparison between databases.")
     report_step(sample, "interpretation", "running")
@@ -233,11 +259,11 @@ def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_c
 
                             obj_hit = find_hit_obj_in_arr(arr_hits_ncbi, species)
                             if (obj_hit == None):
-                                obj_hit = add_new_obj(species, 0, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100)
+                                obj_hit = add_new_obj(species, 0, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100, alignment.accession, hsp.sbjct)
                                 arr_hits_ncbi.append(obj_hit)
                             else:
                                 #TODO, don't think this will update the array, only the obj
-                                add_additional_entry(obj_hit, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100)
+                                add_additional_entry(obj_hit, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100, alignment.accession, hsp.sbjct)
                             if (taxonomy_mode == 1):
                                 counter += 1
                                 table_tax_count = get_taxonomy_count_ncbi_without_entrez(table_tax_count, species)
@@ -498,24 +524,28 @@ def calculate_score(bit_score, max_bit_score):
     score = bit_score/max_bit_score
     return score
 
-def add_new_obj(species, database_type, bit_score, coverage, identity):
+def add_new_obj(species, database_type, bit_score, coverage, identity, accession_number, hit_sequence):
     """
         Makes a new object when a new species hit is found in the complete BLAST search report.
         This contains all the values associated to this new species hit. The object is then returned.
     """
     obj_hit = Hit(species, database_type, 1)
+    obj_hit.add_accession_number(accession_number)
+    obj_hit.add_hit_seq(hit_sequence)
     obj_hit.add_bit_score(bit_score)
     obj_hit.add_coverage(coverage)
     obj_hit.add_identity(identity)
     obj_hit.add_score(0)
     return obj_hit
 
-def add_additional_entry(obj_hit, bit_score, coverage, identity):
+def add_additional_entry(obj_hit, bit_score, coverage, identity, accession_number, hit_sequence):
     """"
         An object for this species already exists but now a different hit for this 
         species has been found. The data for this hit should also be added to the arrays.
     """
     obj_hit.add_num_hits()
+    obj_hit.add_hit_seq(hit_sequence)
+    obj_hit.add_accession_number(accession_number)
     obj_hit.add_bit_score(bit_score)
     obj_hit.add_coverage(coverage)
     obj_hit.add_identity(identity)
