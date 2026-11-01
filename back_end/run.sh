@@ -33,7 +33,7 @@ case $primer_mode in
         ;;
     3)
         echo "Running B-Tub pipeline..."
-        bash ./allprimersrun.sh B-Tub_forward___1.ab1 B-Tub_reverse___1.ab1 "$@"
+        bash ./allprimersrun.sh B_Tub_forward_Primer__1.ab1 B_Tub_reverse_primer__1.ab1 "$@"
         ;;
     *)
         echo "Error: invalid region '$primer_mode'. Use 0 - 3 for different modes."

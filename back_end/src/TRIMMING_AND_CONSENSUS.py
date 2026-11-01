@@ -69,7 +69,10 @@ def main():
     ################ Get reverse complement of reverse sequence ################
     REVERSE_COMPLEMENT_AND_ALIGNMENT.get_reverse_complement_fastq(s_reverse_trim_output_fastq, s_reverse_complement_output_file_fastq)
     REVERSE_COMPLEMENT_AND_ALIGNMENT.get_reverse_complement_fasta(s_reverse_trim_output_fasta, s_reverse_complement_output_file_fasta)
-    records_dict = {s_sample_name + "_" + s_forward_primer_name + "__": s_forward_trim_output_fastq, s_sample_name + "_" + s_reverse_primer_name + "___RC": s_reverse_complement_output_file_fastq}
+    fwd_fastq = SeqIO.read(s_forward_trim_output_fastq, "fastq")
+    rc_fastq  = SeqIO.read(s_reverse_complement_output_file_fastq, "fastq")
+    records_by_id = {fwd_fastq.id: fwd_fastq, rc_fastq.id: rc_fastq}    
+    # records_dict = {s_sample_name + "_" + s_forward_primer_name + "__": s_forward_trim_output_fastq, s_sample_name + "_" + s_reverse_primer_name + "___RC": s_reverse_complement_output_file_fastq}
     print("CL: Reverse complement completed.")
     ####################### Make alignment using CrustalO ######################
     report_step(sample, "alignment", "running")
@@ -79,7 +82,7 @@ def main():
     ########################### Make consensus sequence ########################
     report_step(sample, "consensus", "running")
     alignment_record = AlignIO.read(s_alignment_output_file, "fasta")
-    consensus_sequence = consensus(alignment_record, records_dict, quality_threshold)
+    consensus_sequence = consensus(alignment_record, records_by_id, quality_threshold)
     consensus_record = SeqRecord(
         Seq(consensus_sequence), 
         id = s_sample_name,
@@ -160,49 +163,137 @@ def sliding_window_trim(s_output_fastq_file, s_output_fasta_file, cur_record, wi
     SeqIO.write(trimmed_record, s_output_fastq_file, "fastq")
     SeqIO.write(trimmed_record, s_output_fasta_file, "fasta")
 
-def consensus(alignment_file, records_dict, quality_threshold):
-    # forward_seq = str(forward_record.seq)
-    # reverse_seq = str(reverse_record.seq)
-    # forward_quality = forward_record.letter_annotations["phred_quality"]
-    # reverse_quality = reverse_record.letter_annotations["phred_quality"]
-    aligned_seq = []
-    for record in alignment_file:
-        aligned_seq = {record.id: str(record.seq)}
+# def consensus(alignment_file, records_dict, quality_threshold):
+#     # forward_seq = str(forward_record.seq)
+#     # reverse_seq = str(reverse_record.seq)
+#     # forward_quality = forward_record.letter_annotations["phred_quality"]
+#     # reverse_quality = reverse_record.letter_annotations["phred_quality"]
+#     aligned_seq = []
+#     for record in alignment_file:
+#         aligned_seq = {record.id: str(record.seq)}
 
-    for record_id, sequence in aligned_seq.items():
-        index_map = {record_id: build_index_map(sequence)}
+#     for record_id, sequence in aligned_seq.items():
+#         index_map = {record_id: build_index_map(sequence)}
 
-    consensus = ""
-    for i in range(alignment_file.get_alignment_length()):
-        bases = []
-        qualities = []
+#     consensus = ""
+#     for i in range(alignment_file.get_alignment_length()):
+#         bases = []
+#         qualities = []
     
-        for record_id, sequence in aligned_seq.items():
-            base = sequence[i]
-            index = index_map[record_id][i]
+#         for record_id, sequence in aligned_seq.items():
+#             base = sequence[i]
+#             index = index_map[record_id][i]
 
-            if base == '-' or index is None:
-                continue
-            opening_record = SeqIO.read(records_dict[record_id], "fastq")
-            qual = opening_record.letter_annotations["phred_quality"][index]
-            bases.append(base)
-            qualities.append(qual)
+#             if base == '-' or index is None:
+#                 continue
+#             opening_record = SeqIO.read(records_dict[record_id], "fastq")
+#             qual = opening_record.letter_annotations["phred_quality"][index]
+#             bases.append(base)
+#             qualities.append(qual)
         
+#         if not bases:
+#             continue # All gaps
+
+#         if len(set(bases)) == 1:
+#             consensus += bases[0]
+#         else:
+#             max_q = max(qualities)
+#             best_base = bases[qualities.index(max_q)]
+
+#             if max_q >= quality_threshold:
+#                 consensus += best_base
+#             else:
+#                 consensus += "N" #TODO Check this
+
+#     return consensus
+
+# def consensus(alignment_file, records_dict, quality_threshold):
+#     aligned_seq = {}
+#     index_map = {}
+#     qualities_by_id = {}
+
+#     for record in alignment_file:
+#         rid = record.id
+#         aligned_seq[rid] = str(record.seq)
+#         index_map[rid] = build_index_map(str(record.seq))
+
+#         # Map the alignment ID back to the original FASTQ record
+#         is_rc = rid.endswith("__RC")
+#         orig_id = rid[:-4] if is_rc else rid
+
+#         fastq_rec = SeqIO.read(records_dict[orig_id], "fastq")
+#         quals = fastq_rec.letter_annotations["phred_quality"]
+
+#         # If the sequence was reverse-complemented, qualities must be reversed too
+#         qualities_by_id[rid] = quals[::-1] if is_rc else quals
+
+#     consensus_seq = []
+#     for i in range(alignment_file.get_alignment_length()):
+#         bases = []
+#         qualities = []
+
+#         for rid, sequence in aligned_seq.items():
+#             base = sequence[i]
+#             index = index_map[rid][i]
+
+#             if base == "-" or index is None:
+#                 continue
+
+#             bases.append(base)
+#             qualities.append(qualities_by_id[rid][index])
+
+#         if not bases:
+#             continue  # all gaps
+
+#         if len(set(bases)) == 1:
+#             consensus_seq.append(bases[0])
+#         else:
+#             max_q = max(qualities)
+#             best_base = bases[qualities.index(max_q)]
+#             consensus_seq.append(best_base if max_q >= quality_threshold else "N")
+
+#     return "".join(consensus_seq)
+
+def consensus(alignment, records_by_id, quality_threshold):
+    def find_source(rec):
+        ungapped = str(rec.seq).replace("-", "").upper()
+        src = records_by_id.get(rec.id)
+        if src is not None and str(src.seq).upper() == ungapped:
+            return src
+        # fall back to matching on the sequence itself if the IDs differ
+        for cand in records_by_id.values():
+            if str(cand.seq).upper() == ungapped:
+                return cand
+        raise ValueError(f"No FASTQ record matches alignment row {rec.id!r}")
+
+    rows = []
+    for rec in alignment:
+        src = find_source(rec)
+        rows.append((str(rec.seq), src.letter_annotations["phred_quality"]))
+
+    pointers = [0] * len(rows)   # position in each read's own ungapped coordinates
+    out = []
+
+    for col in range(alignment.get_alignment_length()):
+        bases, qs = [], []
+        for r, (aligned, quals) in enumerate(rows):
+            b = aligned[col]
+            if b == "-":
+                continue
+            bases.append(b.upper())
+            qs.append(quals[pointers[r]])
+            pointers[r] += 1
+
         if not bases:
-            continue # All gaps
+            continue
 
         if len(set(bases)) == 1:
-            consensus += bases[0]
+            out.append(bases[0])
         else:
-            max_q = max(qualities)
-            best_base = bases[qualities.index(max_q)]
+            max_q = max(qs)
+            out.append(bases[qs.index(max_q)] if max_q >= quality_threshold else "N")
 
-            if max_q >= quality_threshold:
-                consensus += best_base
-            else:
-                consensus += "N" #TODO Check this
-
-    return consensus
+    return "".join(out)
 
 def build_index_map(sequence):
     index_map = []

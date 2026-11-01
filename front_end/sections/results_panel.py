@@ -6,6 +6,7 @@ from back_end.results import ResultsNotFound, find_input_files, load_top_results
 from front_end.components.text_comp import text
 from back_end.accepted_species import add_accepted
 
+# Fields of the table
 COLUMNS = [
     {"name": "accession", "label": "Accession number", "field": "accession",
      "align": "left", "sortable": True},
@@ -18,6 +19,7 @@ COLUMNS = [
     {"name": "actions", "label": "Decision", "field": "decision", "align": "center"},
 ]
 
+# Styling to add accept and decline buttons to table row
 ACTIONS_SLOT = r"""
 <q-td :props="props" class="text-center">
   <template v-if="!props.row.decision">
@@ -30,6 +32,29 @@ ACTIONS_SLOT = r"""
     {{ props.row.decision === 'accepted' ? 'Already accepted' : 'Already declined' }}
   </span>
 </q-td>
+"""
+
+# Styling to colour table row when that hit is a RefSeq
+REF_SEQ_SLOT = r"""
+    <q-tr :props="props" :class="(props.row.accession || '').includes('_') ? 'bg-green-1' : ''">
+        <q-td v-for="col in props.cols" :key="col.name" :props="props"
+              :class="col.name === 'actions' ? 'text-center' : ''">
+            <template v-if="col.name === 'actions'">
+                <template v-if="!props.row.decision">
+                    <q-btn flat dense no-caps color="positive" icon="check" label="Accept"
+                        @click="() => $parent.$emit('decide', {id: props.row.id, decision: 'accepted'})" />
+                    <q-btn flat dense no-caps color="negative" icon="close" label="Decline"
+                        @click="() => $parent.$emit('decide', {id: props.row.id, decision: 'declined'})" />
+                </template>
+                <span v-else :class="props.row.decision === 'accepted' ? 'text-positive' : 'text-grey-6'">
+                    {{ props.row.decision === 'accepted' ? 'Already accepted' : 'Already declined' }}
+                </span>
+            </template>
+            <template v-else>
+                {{ col.value }}
+            </template>
+        </q-td>
+    </q-tr>
 """
 
 class ResultsPanel:
@@ -79,6 +104,7 @@ class ResultsPanel:
                 ("Results file", results_path.name if results_path else "not found"),
                 ("Hits shown", str(len(hits))),
             ]
+            text("Note: If an entry is highlighted with green, then it means that hit is also part of the RefSeq database. This could potentially be viewed as a very trustworthy hit.","label")
             with ui.grid(columns="auto 1fr").classes("gap-x-6 gap-y-1"):
                 for label, value in details:
                     text(label, "label")
@@ -106,7 +132,8 @@ class ResultsPanel:
                 table = ui.table(columns=COLUMNS, rows=rows, row_key="id").props(
                     "flat bordered dense"
                 ).classes("w-full")
-                table.add_slot("body-cell-actions", ACTIONS_SLOT)
+                # table.add_slot("body-cell-actions", ACTIONS_SLOT)
+                table.add_slot("body", REF_SEQ_SLOT)                
                 table.on("decide", lambda e: self._decide(e.args, table, rows, sample, output_dir))
 
         self._card.set_visibility(True)
