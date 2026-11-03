@@ -1,14 +1,24 @@
-########### Author and project details ##########
+# Chitin Scout #
+## Acknowledgements ##
+Important to note: This program is still in progress
+The results and findings from this project will be compiled is in progress of getting published. For the time being, you can reference
+this project on GitHub and the authors.
+
+For more information, you can contact:
+- Dr Annelise Botes at annelise@sun.ac.za
+- Cara Louw at 26869993@sun.ac.za
+
+## Author and project details ##
 Author: Cara Louw
 Supervisor: Dr Annelise Botes at Stellenbosch University
 
-Project: 
+### Project: 
 Process Sanger sequence data of the ITS region from fungal samples to identify which species was in the sample. The forward and reverse reading of the regions are first trimmed to remove low quality regions using a sliding window algorithm. It is then aligned using ClustalO. A consensus sequence of the aligned region is used in a BLASTn search. This program performs the BLASTn search on 2 different databases, first the NCBI and then the curated, locally downloaded UNITE database and then makes a summary of the most relevant results for each. This can then be used to identify what the species of the sequenced sample is. This is used to make the process more consistent, accurate and efficient.
 
-Sample preparation and processing: 
-Samples were collected from different Ostrich farms and egg incubation rooms and were then cultured so that fungal species could grow. The samples underwent DNA extraction and then a PCR reaction using ITS1 (forward) and ITS4 (reverse) primers to confirm that fungal DNA can be found in the sample. If there was positive amplification, the PCR reaction is repeated. The PCR product of about 600 bp is purified and then sent to CAF Stellenbosch Campus for Sanger sequencing. 
+### Sample preparation and processing: 
+Samples were collected from different Ostrich farms and egg incubation rooms in the Oudtshoorn region of South Africa and were then cultured so that fungal species could grow. The samples underwent DNA extraction and then a PCR reaction using ITS1 (forward) and ITS4 (reverse) primers to confirm that fungal DNA can be found in the sample. If there was positive amplification, the PCR reaction is repeated. The PCR product of about 600 bp is purified and then sent to CAF Stellenbosch Campus for Sanger sequencing. Additional, other primers were also used to target different fungal DNA regions.
 
-############# Directory structure ############
+## Directory structure ##
 ~/pipeline_sanger_sequencing_ITS1_and_ITS4_primer/
 |
 |-- .gitignore
@@ -65,7 +75,7 @@ Samples were collected from different Ostrich farms and egg incubation rooms and
 |   |   |-- search_thresholds.py
 |   |   |-- time_plot.py
 
-########### Download/sofware requirements ################
+## Download/sofware requirements ##
 - Project needs to be run in a Linux terminal. You can download the Ubuntu terminal from the Windows store
 and follow the onscreen instructions to download.
 - Once the terminal is open, you can navigate to the place where you cloned the project and then from there set
@@ -90,7 +100,7 @@ For updating UNITE database:
         -dbtype nucl \
         -out unite_its_database
 
-############### Curated database structure #################
+## Curated database structure ##
 - In terminal, outside conda environment, execute
     mkdir -p ~/databases/unite
     cd ~/databases/unite
@@ -105,7 +115,7 @@ For updating UNITE database:
 |-- unite_its.nsq
 |-- ...
 
-################## Setting up your conda environment ################
+## Setting up your conda environment ##
 - Important you first need to download Miniconda before you can set up the environment. You can follow 
 the instructions at https://www.anaconda.com/docs/getting-started/miniconda/install/windows-gui-install to do this.
 - The Linux version needs to be installed into the Ubuntu terminal
@@ -122,15 +132,15 @@ the instructions at https://www.anaconda.com/docs/getting-started/miniconda/inst
     - Run "conda env update -f environment.yml --prune" in the command line
     - Run as normal
 
-############### Running this program using the UI #####################
+## Running this program using the UI ##
 - In the root directory, make sure your environment is set up
 - Run python app.py
 - Open the first link given to you to open the UI using Ctrl+click
 
-################# Running the pipeline from the terminal only ##################
+## Running the pipeline from the terminal only ##
 - Folow instructions in the README.md in the back_end folder
 
-####################### Important notes ################################
+## Important notes ##
 - You can't just rename for example an input file. If you want to, you need to rename
 the file name and open the .ab file and rename the sequence as well with the same name.
 - At the moment, the NCBI BLAST search only searches for hits that are fungi organisms. If

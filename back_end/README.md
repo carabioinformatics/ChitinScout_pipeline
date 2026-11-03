@@ -1,4 +1,4 @@
-############# Directory structure ############
+## Directory structure ##
 ~/pipeline_sanger_sequencing_ITS1_and_ITS4_primer/
 |
 |-- .gitignore
@@ -55,7 +55,7 @@
 |   |   |-- search_thresholds.py
 |   |   |-- time_plot.py
 
-################## Setting up your conda environment ################
+## Setting up your conda environment ##
 - You need an internet connection for this
 - In the root directory (back-end)
 - The first time, type this in the Ubuntu terminal
@@ -69,7 +69,7 @@
     - Run "conda env update -f environment.yml --prune" in the command line
     - Run as normal
 
-################ How to run just the pipeline ##################
+## How to run just the pipeline ##
 - In root directory (back-end)
 - If you ever need to pre-maturely stop the pipeline, type Ctrl+C in the terminal it is running. Or Ctrl+Z to stop temporarily.
 - Make sure the environment is set up
@@ -92,7 +92,7 @@
         Mode 1: Do a BLASTn search only on NCBI database. (recommended when running primer mode 1)
         Mode 2: Do a BLASTn search only on UNITE database.
 
-################ ./run.sh Threshold variables ##################
+## ./run.sh Threshold variables ##
 These variables can be changed to make more conservative trimming to raw data or stricter filtering of potential search hits. 
 This is found in at the top of both the ITSrun.sh and TEFrun.sh files.
 Window size: (standard: 5)
@@ -108,7 +108,7 @@ Coverage threshold (%): (standard: 70)
 Time limit (ms): (standard: 200)
     The amount of time each sample is allowed to get processed. This is to prevent samples from taking infinite amounts of time.
 
-################## How to interpret results ####################
+## How to interpret results ##
 Each sample received as input gets its own output directory.
 The ./Cleanup directory is used to store a copy of each step to later reference. 
 
@@ -121,7 +121,7 @@ The ./Comparison directory provides the quickest way to view the results from pi
 
 The ./Output directory also contains a time report containing the execution time of all the different parts of the samples in the pipeline. This data is visually presented with a bar graph saved here as well. This graph can be used to quickly identity samples that had an execution time that was longer than expected. These samples can then be regarded as difficult samples, and might require further manual inspection. The pipeline report can also be consulted to determine if any samples failed during the pipeline, and why. 
 
-################ Order in which to interpret output #######################
+## Order in which to interpret output ##
 1) Look at the pipeline report and determine which samples possibly failed any steps. Depending on why these samples failed, they might need to be re-run or manually inspected.
 2) Look at the time report and time report graph. Identify any samples that had longer execution time and identify which part of the pipeline took long to execute. If any samples are identified, these should be noted to inspect manually or closer.
 3) Go to the individual sample output directories for all the samples that had "normal" execution times. Look at each samples comparison graph. The species with the highest score (0.5 - 1) together with the most hit percentage (0 - 100%; secondary line graph), is mostly likely the best species fit for the unknown sample.
