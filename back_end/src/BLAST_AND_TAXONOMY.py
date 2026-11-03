@@ -259,11 +259,11 @@ def ncbi(s_input_file, s_blast_summary_ncbi, s_blast_complete_ncbi, s_taxonomy_c
 
                             obj_hit = find_hit_obj_in_arr(arr_hits_ncbi, species)
                             if (obj_hit == None):
-                                obj_hit = add_new_obj(species, 0, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100, alignment.accession, hsp.sbjct)
+                                obj_hit = add_new_obj(species, 0, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100, alignment.accession, hsp.query_start, hsp.sbjct)
                                 arr_hits_ncbi.append(obj_hit)
                             else:
                                 #TODO, don't think this will update the array, only the obj
-                                add_additional_entry(obj_hit, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100, alignment.accession, hsp.sbjct)
+                                add_additional_entry(obj_hit, hsp.bits, (hsp.align_length/record.query_length) * 100, (hsp.identities/hsp.align_length)*100, alignment.accession, hsp.query_start, hsp.sbjct)
                             if (taxonomy_mode == 1):
                                 counter += 1
                                 table_tax_count = get_taxonomy_count_ncbi_without_entrez(table_tax_count, species)
@@ -524,27 +524,29 @@ def calculate_score(bit_score, max_bit_score):
     score = bit_score/max_bit_score
     return score
 
-def add_new_obj(species, database_type, bit_score, coverage, identity, accession_number, hit_sequence):
+def add_new_obj(species, database_type, bit_score, coverage, identity, accession_number, query_start, hit_sequence):
     """
         Makes a new object when a new species hit is found in the complete BLAST search report.
         This contains all the values associated to this new species hit. The object is then returned.
     """
     obj_hit = Hit(species, database_type, 1)
     obj_hit.add_accession_number(accession_number)
-    obj_hit.add_hit_seq(hit_sequence)
+    padded_seq = "-" * (query_start - 1) + hit_sequence
+    obj_hit.add_hit_seq(padded_seq)
     obj_hit.add_bit_score(bit_score)
     obj_hit.add_coverage(coverage)
     obj_hit.add_identity(identity)
     obj_hit.add_score(0)
     return obj_hit
 
-def add_additional_entry(obj_hit, bit_score, coverage, identity, accession_number, hit_sequence):
+def add_additional_entry(obj_hit, bit_score, coverage, identity, accession_number, query_start, hit_sequence):
     """"
         An object for this species already exists but now a different hit for this 
         species has been found. The data for this hit should also be added to the arrays.
     """
     obj_hit.add_num_hits()
-    obj_hit.add_hit_seq(hit_sequence)
+    padded_seq = "-" * (query_start - 1) + hit_sequence
+    obj_hit.add_hit_seq(padded_seq)
     obj_hit.add_accession_number(accession_number)
     obj_hit.add_bit_score(bit_score)
     obj_hit.add_coverage(coverage)

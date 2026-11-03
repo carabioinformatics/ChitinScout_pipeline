@@ -51,18 +51,28 @@ REF_SEQ_SLOT = r"""
 
 # Styling for alignment section
 ALIGN_CSS = """
-.aln-scroll { overflow-x: auto; border: 1px solid #ddd; border-radius: 6px; padding: 8px 0; }
-.aln-inner  { width: max-content; font-family: ui-monospace, Menlo, Consolas, monospace;
+.aln-scroll { width: 100%; max-width: 100%; min-width: 0;
+              contain: inline-size;            /* ignore the table's width when sizing parents */
+              overflow: auto; max-height: 70vh;
+              border: 1px solid #ddd; border-radius: 6px; }
+.aln-table  { border-collapse: separate; border-spacing: 0; width: max-content;
+              font-family: ui-monospace, Menlo, Consolas, monospace;
               font-size: 13px; line-height: 1.6; }
-.aln-row    { display: flex; white-space: pre; }
-.aln-name   { position: sticky; left: 0; z-index: 1; background: #fff; min-width: 150px;
-              padding: 0 12px; font-weight: 600; }
-.nt-a   { background: #2e9e4f; color: #fff; }   /* A green  */
-.nt-t   { background: #e53935; color: #fff; }   /* T red    */
-.nt-g   { background: #1e5bd8; color: #fff; }   /* G blue   */
-.nt-c   { background: #e0a800; color: #fff; }   /* C yellow */
+.aln-table th, .aln-table td { padding: 2px 12px; text-align: left; vertical-align: top; }
+.aln-table th { position: sticky; top: 0; z-index: 3; background: #f5f5f5;
+                font-family: sans-serif; border-bottom: 1px solid #ddd; }
+.aln-table .aln-acc { position: sticky; left: 0; z-index: 2; background: #fff;
+                      font-weight: 600; white-space: nowrap; border-right: 1px solid #ddd; 
+                      box-shadow: 2px 0 4px rgba(0,0,0,.25); }
+.aln-table th.aln-acc { z-index: 4; background: #f5f5f5; }
+.aln-seq { white-space: pre; }
+
+.nt-a   { background: #16a34a; color: #fff; }   /* A green  */
+.nt-t   { background: #dc2626; color: #fff; }   /* T red    */
+.nt-g   { background: #0284c7; color: #fff; }   /* G blue   */
+.nt-c   { background: #f59e0b; color: #fff; }   /* C yellow */
 .nt-gap { background: #fff;    color: #000; }   /* gap      */
-.nt-odd { background: #e91e8c; color: #fff; }   /* unusual letters (N, R, Y, ...) */
+.nt-odd { background: #7b1fa2; color: #fff; }   /* N, R, Y, ... */
 .nt-mm  { background: #7b1fa2; color: #fff; }   /* mismatch vs query */
 """
 
@@ -75,10 +85,11 @@ class ResultsPanel:
             self,
             accepted_species_file_name: str,
         ) -> None:
+        ui.add_css(ALIGN_CSS)
         self._accepted_species_file_name = accepted_species_file_name
         self._card = ui.card().classes("w-full rounded-xl shadow-md p-6 gap-4")
         with self._card:
-            self._content = ui.column().classes("w-full gap-4")
+            self._content = ui.column().classes("w-full gap-4 max-w-full min-w-0")
         self._card.set_visibility(False)
         self._decisions: dict[tuple[str, str, str], str] = {}
 
@@ -146,7 +157,7 @@ class ResultsPanel:
                 table.add_slot("body", REF_SEQ_SLOT)                
                 table.on("decide", lambda e: self._decide(e.args, table, rows, sample, output_dir))
 
-                alignment_box = ui.column().classes("w-full gap-2")
+                alignment_box = ui.card().classes("w-full min-w-0 max-w-full gap-2 border rounded-lg shadow-none")
                 alignment_box.set_visibility(False)
                 ui.button(
                     "Make alignment with selected sequences", icon="align_horizontal_left",
@@ -200,14 +211,13 @@ class ResultsPanel:
         box.set_visibility(True)
         with box:
             text("Alignment", "title")
-            ui.label("Alignment").classes("text-lg font-medium")
             mode_toggle = ui.toggle(
                 {"plain": "No colours", "colour": "Nucleotide colours", "mismatch": "Mismatches vs query"},
                 value="mismatch",
             )
             if missing:
                 ui.label(f"Not found in alignment file: {', '.join(missing)}").classes("text-amber-8")
-            view = ui.html("", sanitize=False)
+            view = ui.html("", sanitize=False).classes("w-full min-w-0 max-w-full")
 
             def refresh() -> None:
                 view.content = build_alignment_html(sequences, names, mode_toggle.value)
@@ -256,11 +266,14 @@ def render_sequence(seq: str, query: str, mode: str, is_query: bool = False) -> 
 def build_alignment_html(sequences: dict[str, str], names: list[str], mode: str) -> str:
     query = sequences["query"]
     rows = [("query", query, True)] + [(n, sequences[n], False) for n in names if n in sequences]
-    html = ['<div class="aln-scroll"><div class="aln-inner">']
+    html = [
+        '<div class="aln-scroll"><table class="aln-table">'
+        '<thead><tr><th class="aln-acc">Accession number</th><th>Sequence</th></tr></thead><tbody>'
+    ]
     for name, seq, is_query in rows:
         html.append(
-            f'<div class="aln-row"><span class="aln-name">{escape(name)}</span>'
-            f'<span>{render_sequence(seq, query, mode, is_query)}</span></div>'
+            f'<tr><td class="aln-acc">{escape(name)}</td>'
+            f'<td class="aln-seq">{render_sequence(seq, query, mode, is_query)}</td></tr>'
         )
-    html.append("</div></div>")
+    html.append("</tbody></table></div>")
     return "".join(html)
