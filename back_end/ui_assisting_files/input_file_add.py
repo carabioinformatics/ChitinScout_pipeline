@@ -2,7 +2,7 @@
 from enum import Enum
 from pathlib import Path
 
-from back_end.file_pairing import INPUT_DIR
+from back_end.ui_assisting_files.file_pairing import INPUT_DIR
 
 ALLOWED_EXTENSION = ".ab1"
 

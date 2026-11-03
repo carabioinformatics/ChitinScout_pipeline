@@ -1,3 +1,4 @@
+# Sets all the libraries and dependencies needed to run the program
 name: bioinfo
 channels:
   - conda-forge

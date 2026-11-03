@@ -1,16 +1,16 @@
-"""Results panel: the top BLAST hits for one sample, shown below the status table."""
 from pathlib import Path
 from html import escape
 from typing import Optional
 import re
 from nicegui import ui
-from back_end.results import ResultsNotFound, find_input_files, load_top_results
+from back_end.ui_assisting_files.results import ResultsNotFound, find_input_files, load_top_results
 from front_end.components.text_comp import text
-from back_end.accepted_species import add_accepted
+from back_end.ui_assisting_files.accepted_species import add_accepted
 
+# Structure of hit sequence file
 _HIT_LINE = re.compile(r"^Accession:\s*(\S+)\s+Sequence:\s*(\S+)\s*$")
 
-# Fields of the table
+# Fields of the results table
 COLUMNS = [
     {"name": "accession", "label": "Accession number", "field": "accession",
      "align": "left", "sortable": True},
@@ -76,11 +76,17 @@ ALIGN_CSS = """
 .nt-mm  { background: #7b1fa2; color: #fff; }   /* mismatch vs query */
 """
 
+# Nucleotide descriptions used for alignment creation
 NT_CLASS = {"A": "nt-a", "T": "nt-t", "U": "nt-t", "G": "nt-g", "C": "nt-c", "-": "nt-gap"}
 
 class ResultsPanel:
-    """A card that is hidden until show() is called."""
-
+    """
+        This section displays the results after a successful pipeline completion. It displays basic information like input
+        files used and then a table of all the hits in the summary document. It displays the coverage and identity %, as well 
+        as the accession number and name. You can select any of the hits and click the button at the bottom of the table to 
+        generate an alignment for easy comparison. You can also accept or decline any of the hits. This is then saved to an 
+        excel sheet to easily reference later. The sample name and species options are saved here.
+    """
     def __init__(
             self,
             accepted_species_file_name: str,
@@ -115,7 +121,7 @@ class ResultsPanel:
         forward, reverse = find_input_files(sample, primer_mode)
 
         with self._content:
-            # ---- Header: which sample is being viewed
+            # Header: details of which sample is being viewed
             text("Top BLAST results for sample", "label")
             text(sample, "title")
             details = [
@@ -132,7 +138,6 @@ class ResultsPanel:
                     text(label, "label")
                     text(value, "body")
 
-            # ---- Table (or the reason there isn't one)
             if error:
                 with ui.row().classes("items-center gap-2 rounded-lg bg-amber-50 p-3 w-full"):
                     ui.icon("warning", color="warning")
@@ -140,6 +145,7 @@ class ResultsPanel:
             elif not hits:
                 text("The results file contains no hits.", "body")
             else:
+                # table with different columns
                 rows = [
                     {
                         "id": index,
@@ -154,9 +160,11 @@ class ResultsPanel:
                 table = ui.table(columns=COLUMNS, rows=rows, row_key="id", selection="multiple").props(
                     "flat bordered dense"
                 ).classes("w-full")
+                # Add final column where decision can be made
                 table.add_slot("body", REF_SEQ_SLOT)                
                 table.on("decide", lambda e: self._decide(e.args, table, rows, sample, output_dir))
 
+                # Alignment related column and button
                 alignment_box = ui.card().classes("w-full min-w-0 max-w-full gap-2 border rounded-lg shadow-none")
                 alignment_box.set_visibility(False)
                 ui.button(
@@ -166,8 +174,17 @@ class ResultsPanel:
 
         self._card.set_visibility(True)
 
-    def _decide(self, args: dict, table: ui.table, rows: list[dict],
-                sample: str, output_dir: Path) -> None:
+    def _decide(
+            self, 
+            args: dict, 
+            table: ui.table, 
+            rows: list[dict],
+            sample: str, output_dir: Path
+    ) -> None:
+        """
+            This is used when a hit is chosen to save to the excel sheet. This notifies the user if the
+            hits could be saved to the document.
+        """
         row = rows[args["id"]]
         if row["decision"]:
             return
@@ -190,6 +207,10 @@ class ResultsPanel:
         table.update()
 
     def _make_alignment(self, table, sample, output_dir, box) -> None:
+        """
+            This displays the alignment between the chosen sequences. Reads sequences from the HIT_SEQUENCE_SUMMARY.txt.
+            User has the option of how the sequences are coloured.
+        """
         names = list(dict.fromkeys(row["accession"] for row in table.selected))
         if not names:
             ui.notify("Tick at least one hit first.", type="warning")
@@ -206,11 +227,12 @@ class ResultsPanel:
             return
 
         missing = [n for n in names if n not in sequences]
-
         box.clear()
         box.set_visibility(True)
+
         with box:
             text("Alignment", "title")
+            # Options of how the colouring of the sequences should look
             mode_toggle = ui.toggle(
                 {"plain": "No colours", "colour": "Nucleotide colours", "mismatch": "Mismatches vs query"},
                 value="mismatch",
@@ -229,7 +251,10 @@ class ResultsPanel:
         self._card.set_visibility(False)
 
 def load_alignment(path: Path) -> dict[str, str]:
-    """Lines look like: 'Accession: <name>\t\tSequence: <sequence>'. The query is named 'query'."""
+    """
+        Reads the hit sequence file and makes a list of sequences. The query sequence does not have an
+        accession number but instead called 'query'.
+    """
     sequences: dict[str, str] = {}
     for line in Path(path).read_text().splitlines():
         match = _HIT_LINE.match(line.strip())
@@ -238,18 +263,22 @@ def load_alignment(path: Path) -> dict[str, str]:
     return sequences
 
 def _char_class(mode: str, ch: str, query_ch: str, is_query: bool) -> str:
+    """"
+        Used to determine if there is a sequence mismatch.
+    """
     ch, query_ch = ch.upper(), query_ch.upper()
     if mode == "plain":
         return ""
     if mode == "colour":
         return NT_CLASS.get(ch, "nt-odd")
-    # mode == "mismatch": only differences from the QUERY get a background
     if not is_query and ch != query_ch:
         return "nt-mm"
     return ""
 
 def render_sequence(seq: str, query: str, mode: str, is_query: bool = False) -> str:
-    """Group neighbouring characters with the same style into one <span> (keeps the HTML small)."""
+    """
+        Renders the sequence with the correct styling.
+    """
     parts, run, run_class = [], [], None
     for i, ch in enumerate(seq):
         query_ch = query[i] if i < len(query) else "-"
@@ -264,6 +293,9 @@ def render_sequence(seq: str, query: str, mode: str, is_query: bool = False) -> 
     return "".join(parts)
 
 def build_alignment_html(sequences: dict[str, str], names: list[str], mode: str) -> str:
+    """"
+        Build a html table to first display the Accession number and then the sequence.
+    """
     query = sequences["query"]
     rows = [("query", query, True)] + [(n, sequences[n], False) for n in names if n in sequences]
     html = [

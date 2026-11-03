@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from back_end.file_pairing import INPUT_DIR, PRIMER_SUFFIXES
+from back_end.ui_assisting_files.file_pairing import INPUT_DIR, PRIMER_SUFFIXES
 
 # ASSUMPTION: where the results file sits inside <run output>/<sample>/.
 # Adjust to match your pipeline.

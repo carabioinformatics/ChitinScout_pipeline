@@ -1,6 +1,5 @@
 """Keeps the spreadsheet of accepted species: one row per sample."""
 from pathlib import Path
-
 from openpyxl import Workbook, load_workbook
 
 HEADER = ["Sample", "Genus", "Species"]

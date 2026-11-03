@@ -1,10 +1,9 @@
-"""Search thresholds section: e-value, identity % and coverage % sliders."""
 from typing import Callable
 from nicegui import ui
 from front_end.components.slider_comp import labeled_slider
 from front_end.components.text_comp import text
 
-# Replace these placeholders with your real defaults.
+# Default parameters and thresholds
 DEFAULT_MAX_TRIMMING = 50
 DEFAULT_TRIM_WINDOW_SIZE = 5
 DEFAULT_QUALITY_THRESHOLD = 20
@@ -14,10 +13,11 @@ DEFAULT_COVERAGE = 90           # percent
 DEFAULT_NCBI_WORD_SIZE = 11     # number
 DEFAULT_TIME_LIMIT = 200        # ms
 
-
 class SearchThresholds:
-    """Owns the threshold sliders and the 'use defaults' checkbox."""
-
+    """
+        The search threshold section gathers the parameters used for the pipeline and BLAST search using sliders.
+        There is also an option to use the default parameters in your search instead of choosing ones.
+    """
     def __init__(self, log: Callable[[str], None]) -> None:
         self._log = log
         self._build()
@@ -26,13 +26,13 @@ class SearchThresholds:
     def _build(self) -> None:
         with ui.card().classes("w-full rounded-xl shadow-md p-6 gap-4"):
             text("Pipeline thresholds and specificity", "label")
-
+            # Default using checkbox
             self._use_defaults = ui.checkbox(
                 "Use default values", value=True, on_change=self._handle_defaults_toggle
             )
 
             text("Trimming related parameters", "label")
-
+            # Max % of sequence that still needs to be present after trimming
             self._max_trimming = labeled_slider(
                 "Minimum '%' of sequence that should still be present after trimming",
                 minimum=10, maximum=90, step=5,
@@ -46,7 +46,7 @@ class SearchThresholds:
                 ),
                 format_value=lambda v: f"{int(v)}%",
             )
-
+            # Window size that will be used in the sliding window trimming
             self._trim_window_size = labeled_slider(
                 "Trimming window size",
                 minimum=2, maximum=20, step=1,
@@ -65,7 +65,7 @@ class SearchThresholds:
                     "is good for short reads, whereas 10-20 is smoother and conserves more reads."
                 ),
             )
-
+            # Minimum quality that a nucleotide window needs to have to not be trimmed
             self._quality_threshold = labeled_slider(
                 "Trimming lowest quality threshold",
                 minimum=10, maximum=30, step=1,
@@ -80,7 +80,7 @@ class SearchThresholds:
             )
 
             text("NCBI search related parameters", "label")
-
+            # Word size used when doing a ncbi search
             self._ncbi_word_size = labeled_slider(
                 "NCBI word size",
                 minimum=7, maximum=25, step=1,
@@ -94,7 +94,7 @@ class SearchThresholds:
                     "nucleotide difference."
                 ),
             )
-
+            # Time limit one sample has when doing a NCBI search
             self._time_limit = labeled_slider(
                 "Time limit per sample (s)",
                 minimum=100, maximum=400, step=10,
@@ -109,7 +109,7 @@ class SearchThresholds:
             )
 
             text("NCBI result specificity related parameters", "label")
-
+            # Minimum e-value a search hit should have to be included in the summary
             self._evalue = labeled_slider(
                 "Max e-value",
                 minimum=-50, maximum=0, step=1,
@@ -122,7 +122,7 @@ class SearchThresholds:
                     "specified is displayed in the summary."
                 ),
             )
-
+            # Minimum % identity a search hit should have to be included in the summary
             self._identity = labeled_slider(
                 "Min identity",
                 minimum=0, maximum=100, step=1,
@@ -135,7 +135,7 @@ class SearchThresholds:
                     "than this minimum specified is displayed in the summary."
                 ),
             )
-
+            # Minimum % coverage a search hit should have to be included in the summary
             self._coverage = labeled_slider(
                 "Min coverage",
                 minimum=0, maximum=100, step=1,
@@ -153,6 +153,9 @@ class SearchThresholds:
 
     # ---- Event handlers
     def _handle_defaults_toggle(self, e) -> None:
+        """
+            Resets sliders to default values when the default checkbox has been ticked.
+        """
         if e.value:
             # Ticking the box snaps the sliders back to the defaults
             self._evalue.value = DEFAULT_EVALUE_EXPONENT
@@ -169,16 +172,29 @@ class SearchThresholds:
         self._update_slider_state()
 
     def _update_slider_state(self) -> None:
+        """"
+            Update sliders to new value when changed.
+        """
         sliders_enabled = not self._use_defaults.value
         for slider in (self._evalue, self._identity, self._coverage, self._max_trimming, self._trim_window_size, self._quality_threshold, self._ncbi_word_size, self._time_limit):
             slider.set_enabled(sliders_enabled)
 
     # ---- What the page needs from this section
     def extra_args(self) -> list[str]:
-        """Arguments for the pipeline: e-value, identity, coverage (in that order).
+        """
+            Makes arguments for the pipeline so that it can be passed to the run.sh file.
+            In this order
+            - max trimming %
+            - trim window size
+            - quality threshold
+            - e-value 
+            - identity
+            - coverage
+            - ncbi word size
+            - ncbi time limit
 
-        Returns an empty list when defaults are in use, so the bash script
-        falls back to its own default values."""
+            Returns an empty list when defaults are in use, so the bash script falls back to its own default values.
+        """
         if self._use_defaults.value:
             return []
         return [
@@ -193,20 +209,25 @@ class SearchThresholds:
         ]
 
     def describe(self) -> str:
-        """A one-line summary for the output log."""
+        """
+            A one-line summary for the output log.
+        """
         if self._use_defaults.value:
             return "Using the pipeline's default search thresholds"
-        e_value, identity, coverage = self.extra_args()
+        max_trimming, trim_window_size, quality_threshold, e_value, identity, coverage, ncbi_word_size, ncbi_time_limit = self.extra_args()
         return (
-            f"Search thresholds: max e-value {e_value}, "
-            f"min identity {identity}%, min coverage {coverage}%"
+            f"Search thresholds: max trimming {max_trimming}%, trim window size {trim_window_size}," 
+            f"minimum quality threshold {quality_threshold}, max e-value {e_value}, "
+            f"min identity {identity}%, min coverage {coverage}%, NCBI word size {ncbi_word_size}, NCBI time limit {ncbi_time_limit}s"
         )
     
     def set_enabled(self, enabled: bool) -> None:
-        """Lock or unlock the whole section (used while the pipeline runs)."""
+        """
+            Lock or unlock the whole section (used while the pipeline runs).
+        """
         self._use_defaults.set_enabled(enabled)
         if enabled:
-            self._update_slider_state()   # restore based on the checkbox
+            self._update_slider_state()
         else:
             for slider in (self._evalue, self._identity, self._coverage, self._max_trimming, self._trim_window_size, self._quality_threshold, self._ncbi_word_size, self._time_limit):
                 slider.set_enabled(False)

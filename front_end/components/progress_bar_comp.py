@@ -1,9 +1,11 @@
-"""Reusable progress bar showing 'X of Y samples complete' and a percentage."""
 from nicegui import ui
 from front_end.components.text_comp import text
 
-
 class SampleProgress:
+    """
+        Reusable component displaying sample pipeline progress.
+        Shows 'X out of Y samples complete' text as well as a percentage and progress bar.
+    """
     def __init__(self) -> None:
         with ui.column().classes("w-full gap-1"):
             with ui.row().classes("w-full justify-between items-center"):

@@ -2,8 +2,8 @@
 import asyncio
 
 from nicegui import app, ui
-from back_end.runner import PipelineRunner
-from back_end.user_config import get_email, set_email, is_valid_email
+from back_end.ui_assisting_files.runner import PipelineRunner
+from back_end.ui_assisting_files.user_config import get_email, set_email, is_valid_email
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
 from front_end.components.progress_bar_comp import SampleProgress

@@ -8,7 +8,6 @@ back_end/Output/
 back_end/**/*.tmp
 
 # Personal files
-back_end/CaraRunInstructions.txt
 TODO.txt
 
 # Python cache
