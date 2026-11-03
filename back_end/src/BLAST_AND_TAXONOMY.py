@@ -17,7 +17,7 @@ import numpy
 import pandas as pd
 import matplotlib.pyplot as plt
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from Internship.pipeline_sanger_sequencing_ITS1_and_ITS4_primer.back_end.ui_assisting_files.user_config import get_email
+from back_end.ui_assisting_files.user_config import get_email
 Entrez.email = get_email()
 
 class Hit:

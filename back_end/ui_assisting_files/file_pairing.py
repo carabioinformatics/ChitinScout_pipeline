@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-# Must match the folder name your bash scripts use (./Input). On Linux the
-# capital letter matters: "Input" and "input" are different folders.
-INPUT_DIR = Path(__file__).resolve().parent / "Input"
+INPUT_DIR = Path(__file__).resolve().parent.parent / "Input"
 
 # primer mode -> (forward file ending, reverse file ending)
 PRIMER_SUFFIXES = {

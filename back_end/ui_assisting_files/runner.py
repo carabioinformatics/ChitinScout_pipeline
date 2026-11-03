@@ -9,7 +9,7 @@ from typing import Callable, Optional, Sequence
 from back_end.ui_assisting_files.user_config import get_email
 
 # Folder containing run.sh, ITSrun.sh and TEFrun.sh
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent.parent
 # Environment variable the bash scripts read the sample list file from
 SAMPLE_LIST_ENV_VAR = "SAMPLE_LIST_FILE"
 
