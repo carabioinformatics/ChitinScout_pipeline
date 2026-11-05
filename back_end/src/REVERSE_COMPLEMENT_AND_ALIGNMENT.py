@@ -1,14 +1,11 @@
-import os
-from pipeline_status import report_step
-
-sample = os.environ.get("CURRENT_SAMPLE", "")
 import sys
 import time
 from datetime import datetime
 from Bio import SeqIO
-#from Bio.Align.Applications import ClustalOmegaCommandline
 import subprocess
-import glob
+import os
+from pipeline_status import report_step
+sample = os.environ.get("CURRENT_SAMPLE", "")
 
 def main():
     """
@@ -19,11 +16,12 @@ def main():
         Make alignment of forward primer sequence and reverse complement of reverse primer sequence 
         and save alignment.
     """
-    print("CL: Reverse complement and alignment starting.")
+    print("log: Reverse complement and alignment starting.")
     start_time = time.perf_counter()
     ############################ Arguments #####################################
     s_forward_primer_input_file = "./Input/" + sys.argv[1]
     s_reverse_primer_input_file = "./Input/" + sys.argv[2]
+    
     #################### Establish how files will be named #####################
     i_name_start = s_forward_primer_input_file.find("_") + 1
     i_name_end = s_forward_primer_input_file.find("_", i_name_start)
@@ -37,12 +35,15 @@ def main():
     else: 
         sys.stderr.write("Error: Invalid starting file argument. Does not follow structure of INT26_{}_{}.seq\n")
         sys.exit()    
+
     ####################### Make reverse complement file #######################
     get_reverse_complement_fasta(s_reverse_primer_input_file, s_reverse_complement_output_file)
-    print("CL: Reverse complement completed.")
+    print("log: Reverse complement completed.")
+
     ####################### Make alignment using CrustalO ######################
-    align_sequences(s_sample_name, s_forward_primer_input_file, s_reverse_complement_output_file, s_alignment_output_file)
-    print("CL: Alignment completed.")
+    align_sequences(s_forward_primer_input_file, s_reverse_complement_output_file, s_alignment_output_file)
+    print("log: Alignment completed.")
+
     ####################### Performance report #################################
     end_time = time.perf_counter()
     with open(s_performance_report, "w") as performance_output:
@@ -52,7 +53,7 @@ def main():
         performance_output.write(f"Elapsed time for alignment algorithm: \t{end_time-start_time:.2f} seconds\n")
         performance_output.write("--------------------- Reverse complement and alignment ---------------------\n")
     performance_output.close()
-    print("CL: Reverse complement and alignment ending.")
+    print("log: Reverse complement and alignment ending.")
 
 def get_reverse_complement_fasta(s_reverse_primer_input_file, s_reverse_complement_output_file):    
     """
@@ -81,13 +82,12 @@ def get_reverse_complement_fastq(s_reverse_primer_input_file, s_reverse_compleme
             SeqIO.write(record, output, "fastq")
 
 
-def align_sequences(s_sample_name, s_forward_primer_input_file, s_reverse_complement_output_file, s_alignment_output_file, s_combined_file):
+def align_sequences(s_forward_primer_input_file, s_reverse_complement_output_file, s_alignment_output_file, s_combined_file):
     """
-        Take forward primer sequence, reverse complement of reverse primer sequence and align using the ClustalW
+        Take forward primer sequence, reverse complement of reverse primer sequence and align using the ClustalO
         algorithm. The algorithm is then saved in the s_alignment_output_file.
     """
-    input_files = [s_forward_primer_input_file, s_reverse_complement_output_file]  #glob.glob("../Input/*.seq")
-    #combined_file = "./Output/Cleanup/INT26_" + s_sample_name + "_COMBINED.fas"
+    input_files = [s_forward_primer_input_file, s_reverse_complement_output_file]
     with open(s_combined_file, "w") as combined:
         for infile in input_files:
             with open(infile) as f:
@@ -96,7 +96,7 @@ def align_sequences(s_sample_name, s_forward_primer_input_file, s_reverse_comple
     cmd = ["clustalo", "-i", s_combined_file, "-o", s_alignment_output_file, "--force", "--outfmt=fa"]
 
     try:
-        subprocess.run(cmd, check = True) #capture_output = True, text = True)
+        subprocess.run(cmd, check = True)
         print(f"Aligned {infile} to {s_alignment_output_file}")
     except subprocess.CalledProcessError as e:
         sys.stderr.write(f"Error aligning {infile}: {e}\n")

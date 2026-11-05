@@ -1,7 +1,3 @@
-import os
-from pipeline_status import report_step
-
-sample = os.environ.get("CURRENT_SAMPLE", "")
 import sys
 import time
 from datetime import datetime
@@ -10,14 +6,25 @@ from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Seq import Seq
 import REVERSE_COMPLEMENT_AND_ALIGNMENT
+from pipeline_status import report_step
+import os
+sample = os.environ.get("CURRENT_SAMPLE", "")
 
-############ TODO ################
-#TODO If alignment is of low quality, then shouldn't continue to trimming
+# Map used to reference when making the consensus sequence
+IUPAC = {
+    "A": "A", "C": "C", "G": "G", "T": "T",
+    "R": "AG", "Y": "CT", "S": "CG", "W": "AT", "K": "GT", "M": "AC",
+    "B": "CGT", "D": "AGT", "H": "ACT", "V": "ACG", "N": "ACGT",
+}
+BASE_SETS = {k: frozenset(v) for k, v in IUPAC.items()}
+CODE_FOR_SET = {s: k for k, s in BASE_SETS.items()}
+ANY = BASE_SETS["N"]
+
 def main():
     """
         Take alignment file, make a consensus sequence, and trim all low quality regions.
     """
-    print("CL: Trimming and consensus starting.")
+    print("log: Trimming and consensus starting.")
     start_time = time.perf_counter()
     ############################ Arguments #####################################
     s_forward_file = sys.argv[1]
@@ -28,6 +35,7 @@ def main():
     cleanup_directory_extension = sys.argv[6]
     final_directory_extension = sys.argv[7]
     blast_directory_extension = sys.argv[8]
+
     #################### Establish how files will be named #####################
     i_name_start = s_forward_file.find("_") + 1
     i_name_end = s_forward_file.find("_", i_name_start)
@@ -49,10 +57,9 @@ def main():
     else: 
         sys.stderr.write("Error: Invalid starting file argument. Does not follow structure of INT26_{}_ALIGNMENT.aln")
         return 1
-        #sys.exit()    
+        #sys.exit()   
+ 
     ############################# Trimming #####################################
-    # window_size = 7 #between 5 - 10: good for short reads, 10-20 smoother, more conservative
-    # quality_threshold = 20 #Could go up to 30 for stricter trimming; 20 standard
     report_step(sample, "trimming", "running")
     forward_record = SeqIO.read(s_forward_file, "abi")
     reverse_record = SeqIO.read(s_reverse_file, "abi")
@@ -65,20 +72,22 @@ def main():
     trimmed_reverse_record = SeqIO.read(s_reverse_trim_output_fasta, "fasta")
     trimmed_reverse_length = len(trimmed_reverse_record)
     report_step(sample, "trimming", "done")
-    print("CL: Trimming complete.")
+    print("log: Trimming complete.")
+
     ################ Get reverse complement of reverse sequence ################
     REVERSE_COMPLEMENT_AND_ALIGNMENT.get_reverse_complement_fastq(s_reverse_trim_output_fastq, s_reverse_complement_output_file_fastq)
     REVERSE_COMPLEMENT_AND_ALIGNMENT.get_reverse_complement_fasta(s_reverse_trim_output_fasta, s_reverse_complement_output_file_fasta)
     fwd_fastq = SeqIO.read(s_forward_trim_output_fastq, "fastq")
     rc_fastq  = SeqIO.read(s_reverse_complement_output_file_fastq, "fastq")
     records_by_id = {fwd_fastq.id: fwd_fastq, rc_fastq.id: rc_fastq}    
-    # records_dict = {s_sample_name + "_" + s_forward_primer_name + "__": s_forward_trim_output_fastq, s_sample_name + "_" + s_reverse_primer_name + "___RC": s_reverse_complement_output_file_fastq}
-    print("CL: Reverse complement completed.")
+    print("log: Reverse complement completed.")
+
     ####################### Make alignment using CrustalO ######################
     report_step(sample, "alignment", "running")
-    REVERSE_COMPLEMENT_AND_ALIGNMENT.align_sequences(s_sample_name, s_forward_trim_output_fasta, s_reverse_complement_output_file_fasta, s_alignment_output_file, s_combined_file)
+    REVERSE_COMPLEMENT_AND_ALIGNMENT.align_sequences(s_forward_trim_output_fasta, s_reverse_complement_output_file_fasta, s_alignment_output_file, s_combined_file)
     report_step(sample, "alignment", "done")
-    print("CL: Alignment completed.")
+    print("log: Alignment completed.")
+
     ########################### Make consensus sequence ########################
     report_step(sample, "consensus", "running")
     alignment_record = AlignIO.read(s_alignment_output_file, "fasta")
@@ -91,7 +100,8 @@ def main():
     consensus_length = len(consensus_sequence)
     SeqIO.write(consensus_record, s_consensus_file, "fasta")
     report_step(sample, "consensus", "done")
-    print("CL: Consensus completed.")
+    print("log: Consensus completed.")
+
     ####################### Performance report #################################
     end_time = time.perf_counter()
     with open(s_performance_report, "w") as performance_output:
@@ -110,7 +120,7 @@ def main():
         performance_output.write("Length of consensus sequence: " + str(consensus_length) + "\n")
         performance_output.write("--------------------- Trimming, alignment and consensus ---------------------\n")
     performance_output.close()
-    print("CL: Trimming and consensus ending.")
+    print("log: Trimming and consensus ending.")
     if (((trimmed_forward_length/initial_forward_length)*100 > max_trimming) and ((trimmed_reverse_length/initial_reverse_length)*100 > max_trimming)):
         return 0
     else:
@@ -120,12 +130,11 @@ def sliding_window_trim(s_output_fastq_file, s_output_fasta_file, cur_record, wi
     """
         Takes a file and trims all low resolution reads.
         Takes regions of size window_size, get's the average quality score
-        for that region, and if the region has a low quality score, then 
-        it should be removed. This works for low quality reads at the start
+        for that region, and if the region has a low quality score, then the first nucleotide
+        of that region gets removed. This works for low quality reads at the start
         and end of Sanger sequencing. It then makes a trim of the sequence
         and the phred_quality file. This is so that indexing in the trimmed 
-        sequence is still correct. Returns this data for a singular sequence.
-        (Almost like k-mers)
+        sequence is still correct.
     """
     arr_qualities = cur_record.letter_annotations["phred_quality"]
     sequence = cur_record.seq
@@ -163,149 +172,64 @@ def sliding_window_trim(s_output_fastq_file, s_output_fasta_file, cur_record, wi
     SeqIO.write(trimmed_record, s_output_fastq_file, "fastq")
     SeqIO.write(trimmed_record, s_output_fasta_file, "fasta")
 
-# def consensus(alignment_file, records_dict, quality_threshold):
-#     # forward_seq = str(forward_record.seq)
-#     # reverse_seq = str(reverse_record.seq)
-#     # forward_quality = forward_record.letter_annotations["phred_quality"]
-#     # reverse_quality = reverse_record.letter_annotations["phred_quality"]
-#     aligned_seq = []
-#     for record in alignment_file:
-#         aligned_seq = {record.id: str(record.seq)}
-
-#     for record_id, sequence in aligned_seq.items():
-#         index_map = {record_id: build_index_map(sequence)}
-
-#     consensus = ""
-#     for i in range(alignment_file.get_alignment_length()):
-#         bases = []
-#         qualities = []
-    
-#         for record_id, sequence in aligned_seq.items():
-#             base = sequence[i]
-#             index = index_map[record_id][i]
-
-#             if base == '-' or index is None:
-#                 continue
-#             opening_record = SeqIO.read(records_dict[record_id], "fastq")
-#             qual = opening_record.letter_annotations["phred_quality"][index]
-#             bases.append(base)
-#             qualities.append(qual)
-        
-#         if not bases:
-#             continue # All gaps
-
-#         if len(set(bases)) == 1:
-#             consensus += bases[0]
-#         else:
-#             max_q = max(qualities)
-#             best_base = bases[qualities.index(max_q)]
-
-#             if max_q >= quality_threshold:
-#                 consensus += best_base
-#             else:
-#                 consensus += "N" #TODO Check this
-
-#     return consensus
-
-# def consensus(alignment_file, records_dict, quality_threshold):
-#     aligned_seq = {}
-#     index_map = {}
-#     qualities_by_id = {}
-
-#     for record in alignment_file:
-#         rid = record.id
-#         aligned_seq[rid] = str(record.seq)
-#         index_map[rid] = build_index_map(str(record.seq))
-
-#         # Map the alignment ID back to the original FASTQ record
-#         is_rc = rid.endswith("__RC")
-#         orig_id = rid[:-4] if is_rc else rid
-
-#         fastq_rec = SeqIO.read(records_dict[orig_id], "fastq")
-#         quals = fastq_rec.letter_annotations["phred_quality"]
-
-#         # If the sequence was reverse-complemented, qualities must be reversed too
-#         qualities_by_id[rid] = quals[::-1] if is_rc else quals
-
-#     consensus_seq = []
-#     for i in range(alignment_file.get_alignment_length()):
-#         bases = []
-#         qualities = []
-
-#         for rid, sequence in aligned_seq.items():
-#             base = sequence[i]
-#             index = index_map[rid][i]
-
-#             if base == "-" or index is None:
-#                 continue
-
-#             bases.append(base)
-#             qualities.append(qualities_by_id[rid][index])
-
-#         if not bases:
-#             continue  # all gaps
-
-#         if len(set(bases)) == 1:
-#             consensus_seq.append(bases[0])
-#         else:
-#             max_q = max(qualities)
-#             best_base = bases[qualities.index(max_q)]
-#             consensus_seq.append(best_base if max_q >= quality_threshold else "N")
-
-#     return "".join(consensus_seq)
-
 def consensus(alignment, records_by_id, quality_threshold):
+    """
+        Makes consensus sequence between an alignment. If nucleotides don't agree, then takes the
+        nucleotide with the best quality at that position. If not an A, C, T or G, but rather placeholder
+        then uses above map to find a representing nucleotide that is inclusive of the read in sequence
+        1 and 2. 
+    """
+    # Build the sequence 
+    by_seq = {str(r.seq).upper(): r for r in records_by_id.values()}
+
     def find_source(rec):
         ungapped = str(rec.seq).replace("-", "").upper()
         src = records_by_id.get(rec.id)
         if src is not None and str(src.seq).upper() == ungapped:
             return src
-        # fall back to matching on the sequence itself if the IDs differ
-        for cand in records_by_id.values():
-            if str(cand.seq).upper() == ungapped:
-                return cand
-        raise ValueError(f"No FASTQ record matches alignment row {rec.id!r}")
+        src = by_seq.get(ungapped)
+        if src is None:
+            raise ValueError(f"No FASTQ record matches alignment row {rec.id!r}")
+        return src
 
-    rows = []
-    for rec in alignment:
-        src = find_source(rec)
-        rows.append((str(rec.seq), src.letter_annotations["phred_quality"]))
+    rows = [(str(rec.seq), find_source(rec).letter_annotations["phred_quality"])
+            for rec in alignment]
 
-    pointers = [0] * len(rows)   # position in each read's own ungapped coordinates
+    pointers = [0] * len(rows)
     out = []
 
     for col in range(alignment.get_alignment_length()):
-        bases, qs = [], []
+        # Saves quality then base
+        obs = []
         for r, (aligned, quals) in enumerate(rows):
             b = aligned[col]
             if b == "-":
                 continue
-            bases.append(b.upper())
-            qs.append(quals[pointers[r]])
+            obs.append((quals[pointers[r]], b.upper()))
             pointers[r] += 1
 
-        if not bases:
+        if not obs:
             continue
 
-        if len(set(bases)) == 1:
-            out.append(bases[0])
-        else:
-            max_q = max(qs)
-            out.append(bases[qs.index(max_q)] if max_q >= quality_threshold else "N")
+        if len({b for _, b in obs}) == 1:
+            out.append(obs[0][1])
+            continue
+
+        # Find the nucleotide with the best quality first
+        obs.sort(key=lambda x: x[0], reverse=True)
+        if obs[0][0] < quality_threshold:
+            out.append("N")
+            continue
+
+        current = BASE_SETS.get(obs[0][1], ANY)
+        for q, b in obs[1:]:
+            if q < quality_threshold:
+                break
+            narrowed = current & BASE_SETS.get(b, ANY)
+            if narrowed:
+                current = narrowed
+        out.append(CODE_FOR_SET[current])
 
     return "".join(out)
-
-def build_index_map(sequence):
-    index_map = []
-    seq_index = 0
-
-    for base in sequence:
-        if base == "-":
-            index_map.append(None)
-        else:
-            index_map.append(seq_index)
-            seq_index += 1
-
-    return index_map
 
 if __name__ == "__main__" : sys.exit(main())

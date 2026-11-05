@@ -1,4 +1,4 @@
-# Chitin Scout #
+# Chitin Scout with Graphic user interface #
 ## Acknowledgements ##
 Important to note: This program is still in progress
 The results and findings from this project will be compiled is in progress of getting published. For the time being, you can reference

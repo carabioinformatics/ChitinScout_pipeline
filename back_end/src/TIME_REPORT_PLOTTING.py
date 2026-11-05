@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 def main():
-    print("CL: Start with time plotting.")
-    date_today = datetime.now()
-    # Format as yyyy-mm-dd_hh:mm
-    formatted_date_today = date_today.strftime("%Y-%m-%d_%H:%M")
-    
+    """
+        Reads the time reports of each sample and how long it took to run through the 
+        pipeline. This data is then used to plot a bar graph that is saved as a png.
+    """
+    print("log: Start with time plotting.")    
     time_report = sys.argv[1]
     time_plot = sys.argv[2]
 
@@ -18,8 +18,8 @@ def main():
     # Plot bar graph
     plt.figure(figsize=(8,4))
     plt.bar(time_input["Sample name"], time_input["Total time (s)"])
-    # Plot threshold line at 30 seconds
-    plt.axhline(y=100, color="red", linestyle="--", linewidth=2, label="Threshold")
+    # Plot threshold line at 200 seconds
+    plt.axhline(y=200, color="red", linestyle="--", linewidth=2, label="Threshold")
 
     # Display preferences 
     plt.xlabel("Sample name")
@@ -29,8 +29,7 @@ def main():
     plt.tight_layout()
     
     plt.savefig(time_plot, dpi=300)
-    #plt.show()
 
-    print("CL: Done with time plotting.")
+    print("log: Done with time plotting.")
 
 if __name__ == "__main__" : main()

@@ -12,7 +12,7 @@ today_date=$(date +"%Y-%m-%d_%H:%M")
 mkdir -p "./Output/$today_date"
 echo "@@OUTPUT_DIR|./Output/$today_date"
 
-# Set thresholds for search specificity, can be changed
+# Set thresholds for search specificity or use defaults
 max_trimming=${5:-50}
 window_size=${6:-5}
 quality_threshold=${7:-20}
@@ -22,6 +22,7 @@ coverage_threshold=${10:-90}
 ncbi_word_size=${11:-11}
 time_limit=${12:-200}
 
+# Make report files and add headings
 pipeline_report="./Output/$today_date/INT26_PIPELINE_REPORT.txt"
 echo -e "Pipeline started" > "$pipeline_report"
 timing_report="./Output/$today_date/INT26_TIME_REPORT.txt"
@@ -103,7 +104,7 @@ process_sample() {
         *)
             echo -e "---$sample_name terminated." >> "$pipeline_report"
             echo -e "-----Error: Unknown exit code for $sample_name" >> "$pipeline_report"
-            report_error "$sample_name" "Unknown exit code $trimming_return_code."            return
+            report_error "$sample_name" "Unknown exit code $trimming_return_code."   
             return
             ;;
     esac
@@ -162,6 +163,7 @@ process_sample() {
     echo "================================================="
 }
 
+# Used to draw a progress bar
 draw_progress() {
     local current=$1
     local total=$2
@@ -181,11 +183,12 @@ draw_progress() {
      "$percent" "$current" "$total"
 }
 
+# Create message if error has been found
 report_error() {
     echo "@@SAMPLE_ERROR|$1|$2"
 }
 
-# Find all the forward files
+# Find all the forward files related to the specified primer
 forward_files=()
 if [[ -n "$SAMPLE_LIST_FILE" && -f "$SAMPLE_LIST_FILE" ]]; then
     while IFS= read -r wanted_sample || [[ -n "$wanted_sample" ]]; do
@@ -215,6 +218,7 @@ done
 echo -e "Pipeline ended" >> "$pipeline_report"
 echo "Pipeline finished"
 
+# Make timing report of how long each sample took
 python3 ./src/TIME_REPORT_PLOTTING.py "$timing_report" "$timing_plot"
 plot_file=$(ls -t "./Output/$today_date"/*.png "./Output/$today_date"/*.jpg 2>/dev/null | head -n 1)
 if [[ -n "$plot_file" ]]; then

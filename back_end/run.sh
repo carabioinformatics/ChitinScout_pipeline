@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# This run.sh file is used to start up the pipeline. The execution is then redirected to the next Bash
+# script depending on the primer choice.
 echo "Start by picking a primer"
 
+# Error when no command line arguments are found.
 if [[ $# -lt 1 ]]; then
     echo "Command line arguments required"
     echo "Usage: $0 <0|1> [taxonomy_mode] [database_mode] [trim_window_size] [quality_threshold] [e_value_threshold] [identity_threshold] [coverage_threshold] [ncbi_word_size] [time_limit]"
@@ -20,12 +23,10 @@ case $primer_mode in
     0)
         echo "Running ITS pipeline..."
         bash ./allprimersrun.sh ITS1___1.ab1 ITS4___1.ab1 "$@"
-        # bash ./ITSrun.sh "$@"
         ;;
     1)
         echo "Running TEF pipeline..."
         bash ./allprimersrun.sh TEF_forward___1.ab1 TEF_reverse___1.ab1 "$@"
-        # bash ./TEFrun.sh "$@"
         ;;
     2)
         echo "Running LSU pipeline..."

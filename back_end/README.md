@@ -1,3 +1,23 @@
+# Chitin Scout command line pipeline #
+## Acknowledgements ##
+Important to note: This program is still in progress
+The results and findings from this project will be compiled is in progress of getting published. For the time being, you can reference
+this project on GitHub and the authors.
+
+For more information, you can contact:
+- Dr Annelise Botes at annelise@sun.ac.za
+- Cara Louw at 26869993@sun.ac.za
+
+## Author and project details ##
+Author: Cara Louw
+Supervisor: Dr Annelise Botes at Stellenbosch University
+
+### Project: 
+Process Sanger sequence data of the ITS region from fungal samples to identify which species was in the sample. The forward and reverse reading of the regions are first trimmed to remove low quality regions using a sliding window algorithm. It is then aligned using ClustalO. A consensus sequence of the aligned region is used in a BLASTn search. This program performs the BLASTn search on 2 different databases, first the NCBI and then the curated, locally downloaded UNITE database and then makes a summary of the most relevant results for each. This can then be used to identify what the species of the sequenced sample is. This is used to make the process more consistent, accurate and efficient.
+
+### Sample preparation and processing: 
+Samples were collected from different Ostrich farms and egg incubation rooms in the Oudtshoorn region of South Africa and were then cultured so that fungal species could grow. The samples underwent DNA extraction and then a PCR reaction using ITS1 (forward) and ITS4 (reverse) primers to confirm that fungal DNA can be found in the sample. If there was positive amplification, the PCR reaction is repeated. The PCR product of about 600 bp is purified and then sent to CAF Stellenbosch Campus for Sanger sequencing. Additional, other primers were also used to target different fungal DNA regions.
+
 ## Directory structure ##
 ~/pipeline_sanger_sequencing_ITS1_and_ITS4_primer/
 |
@@ -84,12 +104,14 @@
         Need to specify which primers are used so that pipeline gets sligthly adapted to perform optimally for those primers.
         Mode 0: ITS primers
         Mode 1: TEF primers
+        Mode 2: LSU primers
+        Mode 3: B-Tub primers
     Taxonomy mode:
         Mode 0: Does complete BLASTn search and makes a summary of the results.
         Mode 1: Does a complete BLASTn search and makes a summary of the results. But also then counts how many hits were found for each species.
     Database mode:
         Mode 0: Do a BLASTn search on the NCBI and UNITE database.
-        Mode 1: Do a BLASTn search only on NCBI database. (recommended when running primer mode 1)
+        Mode 1: Do a BLASTn search only on NCBI database. (recommended when running primer mode 1-3)
         Mode 2: Do a BLASTn search only on UNITE database.
 
 ## ./run.sh Threshold variables ##
