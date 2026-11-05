@@ -1,4 +1,3 @@
-"""Starts and stops the pipeline bash scripts. Contains no GUI code."""
 import asyncio
 import os
 import re
@@ -6,7 +5,6 @@ import signal
 import tempfile
 from pathlib import Path
 from typing import Callable, Optional, Sequence
-from back_end.ui_assisting_files.user_config import get_email
 
 # Folder containing run.sh, ITSrun.sh and TEFrun.sh
 SCRIPT_DIR = Path(__file__).resolve().parent.parent
@@ -15,13 +13,14 @@ SAMPLE_LIST_ENV_VAR = "SAMPLE_LIST_FILE"
 
 PROGRESS_PATTERN = re.compile(r"\((\d+)/(\d+) samples\)")
 PLOT_PATTERN = re.compile(r"^PLOT_FILE:\s*(.+)$")
-# Marker lines printed by the pipeline scripts (see pipeline_status.py)
 STEP_PATTERN = re.compile(r"^@@STEP\|([^|]*)\|([^|]*)\|([^|]*)\|?(.*)$")
 SAMPLE_ERROR_PATTERN = re.compile(r"^@@SAMPLE_ERROR\|([^|]*)\|(.*)$")
 OUTPUT_DIR_PATTERN = re.compile(r"^@@OUTPUT_DIR\|(.+)$")
 
 class PipelineRunner:
-    """Runs ./run.sh and can stop it, including everything it started."""
+    """
+        Runs ./run.sh and can stop it, including everything it started.
+    """
 
     def __init__(self) -> None:
         self._process: Optional[asyncio.subprocess.Process] = None
@@ -33,7 +32,9 @@ class PipelineRunner:
 
     @property
     def was_stopped(self) -> bool:
-        """True if the last run ended because stop() was called."""
+        """
+            True if the last run ended because stop() was called.
+        """
         return self._stopped_by_user
 
     async def run(
@@ -49,7 +50,9 @@ class PipelineRunner:
         on_sample_error: Optional[Callable[[str, str], None]] = None,
         on_output_dir: Optional[Callable[[Path], None]] = None      
     ) -> int:
-        """Run ./run.sh <primer_mode> [extra_args...] and return its exit code."""
+        """
+            Run ./run.sh <primer_mode> [extra_args...] and return its exit code.
+        """
         self._stopped_by_user = False
 
         env = {**os.environ, "PYTHONUNBUFFERED": "1"}
@@ -70,7 +73,6 @@ class PipelineRunner:
                 on_start()
 
             async for raw_line in self._process.stdout:
-                # The script's progress line starts with a carriage return
                 line = raw_line.decode(errors="replace").rstrip().lstrip("\r")
                 step_match = STEP_PATTERN.match(line)
                 if step_match:
@@ -97,7 +99,6 @@ class PipelineRunner:
                 if on_plot:
                     plot_match = PLOT_PATTERN.match(line)
                     if plot_match:
-                        # The path is relative to the folder the scripts run in
                         on_plot((SCRIPT_DIR / plot_match.group(1)).resolve())
             return await self._process.wait()
         finally:
@@ -106,7 +107,9 @@ class PipelineRunner:
                 Path(sample_list_path).unlink(missing_ok=True)
 
     async def stop(self, timeout: float = 5.0) -> None:
-        """Stop the running pipeline. Does nothing if nothing is running."""
+        """
+            Stop the running pipeline. Does nothing if not running.
+        """
         process = self._process
         if process is None or process.returncode is not None:
             return
@@ -116,12 +119,14 @@ class PipelineRunner:
         try:
             await asyncio.wait_for(process.wait(), timeout)
         except asyncio.TimeoutError:
-            self._signal_group(process, signal.SIGKILL)   # force it
+            self._signal_group(process, signal.SIGKILL)
             await process.wait()
 
     @staticmethod
     def _write_sample_list(sample_names: Optional[Sequence[str]]) -> Optional[str]:
-        """Write one sample name per line to a temp file and return its path."""
+        """
+            Write one sample name per line to a temp file and return its path.
+        """
         if not sample_names:
             return None
         with tempfile.NamedTemporaryFile(
@@ -136,4 +141,4 @@ class PipelineRunner:
             # Because of start_new_session, the group id equals the process id
             os.killpg(process.pid, sig)
         except ProcessLookupError:
-            pass   # already finished
+            pass

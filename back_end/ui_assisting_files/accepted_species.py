@@ -1,12 +1,12 @@
-"""Keeps the spreadsheet of accepted species: one row per sample."""
 from pathlib import Path
 from openpyxl import Workbook, load_workbook
 
 HEADER = ["Sample", "Genus", "Species"]
 
-
 def split_species(full_name: str) -> tuple[str, str]:
-    """'Penicillium glabrum' -> ('Penicillium', 'glabrum')."""
+    """'
+        Split the genus name from the species name.
+    """
     parts = full_name.strip().split(None, 1)
     genus = parts[0] if parts else ""
     epithet = parts[1] if len(parts) > 1 else "sp."
@@ -14,10 +14,10 @@ def split_species(full_name: str) -> tuple[str, str]:
 
 
 def add_accepted(xlsx_path: Path, sample: str, full_species_name: str) -> bool:
-    """Record an accepted hit. Returns False if it was already recorded.
-
-    New sample  -> new row: sample, genus, species.
-    Known sample -> genus is kept, the species goes in the next free column.
+    """
+        Record an accepted hit. Returns False if it was already recorded.
+        New sample  -> new row: sample, genus, species.
+        Known sample -> genus is kept, the species goes in the next free column.
     """
     genus, epithet = split_species(full_species_name)
 
@@ -36,6 +36,7 @@ def add_accepted(xlsx_path: Path, sample: str, full_species_name: str) -> bool:
         None,
     )
 
+    # Add to Excel sheet with the sample name.
     if row_idx is None:
         ws.append([sample, genus, epithet])
         added = True
@@ -55,5 +56,6 @@ def add_accepted(xlsx_path: Path, sample: str, full_species_name: str) -> bool:
             added = True
 
     if added:
-        wb.save(xlsx_path)      # raises PermissionError if the file is open in Excel
+        # If the file is open in Excel already
+        wb.save(xlsx_path) 
     return added

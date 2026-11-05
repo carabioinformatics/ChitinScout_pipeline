@@ -1,27 +1,21 @@
-"""Saves uploaded input files into the Input folder. Contains no GUI code."""
 from enum import Enum
 from pathlib import Path
-
 from back_end.ui_assisting_files.file_pairing import INPUT_DIR
 
 ALLOWED_EXTENSION = ".ab1"
-
 
 class Outcome(Enum):
     ADDED = "added"
     REPLACED = "replaced"
     REJECTED = "rejected"
 
-
 def store_input_file(
     file_name: str, content: bytes, input_dir: Path = INPUT_DIR
 ) -> tuple[Outcome, str]:
-    """Save one file into the input folder.
-
-    Returns the outcome and a message suitable for the output log.
     """
-    # Keep only the final part of the name, so a name like "../../x.ab1"
-    # can never write outside the Input folder.
+        Save one file into the input folder.
+        Returns the outcome and a message suitable for the output log.
+    """
     base_name = Path(file_name.replace("\\", "/")).name
 
     if not base_name.lower().endswith(ALLOWED_EXTENSION):
@@ -29,16 +23,14 @@ def store_input_file(
     if not content:
         return Outcome.REJECTED, f"Skipped {base_name}: file is empty"
 
-    # Normalise the extension to lowercase: the pipeline looks for "*.ab1",
-    # which would not match "SAMPLE.AB1" on Linux.
+    # Normalise the extension to lowercase
     safe_name = base_name[: -len(ALLOWED_EXTENSION)] + ALLOWED_EXTENSION
 
     input_dir.mkdir(parents=True, exist_ok=True)
     target = input_dir / safe_name
     existed = target.exists()
 
-    # Write to a temporary file first and then rename it, so a failed upload
-    # can never leave a half-written file that the pipeline might pick up.
+    # Write to a temporary file first and then rename it
     temporary = input_dir / (safe_name + ".part")
     temporary.write_bytes(content)
     temporary.replace(target)

@@ -1,21 +1,16 @@
-"""Reads a sample's top BLAST results from the run's output folder. No GUI code."""
-import csv
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-
 from back_end.ui_assisting_files.file_pairing import INPUT_DIR, PRIMER_SUFFIXES
 
-# ASSUMPTION: where the results file sits inside <run output>/<sample>/.
-# Adjust to match your pipeline.
+# Where the BLAST summary is saved.
 RESULTS_FILE_PATTERN = "Final/INT26_{sample}_BLAST_SUMMARY_NCBI.txt"
 
 # How many hits to show per sample
 TOP_N = 25
 
-# Accepted header names for each field (compared case-insensitively, ignoring
-# punctuation, so "Coverage (%)" matches "coverage")
+# Header titles found in the BLAST summary file
 LINE_PATTERN = re.compile(
     r"Accession:\s*(?P<accession>\S+)\s+"
     r"Species:\s*(?P<species>.*?)\s+"
@@ -29,12 +24,19 @@ class ResultsNotFound(Exception):
 
 @dataclass
 class BlastHit:
+    """
+        This object stores the information related to a hit found in the
+        BLAST summary document.
+    """
     accession: str
     species: str
     coverage: Optional[float]   # percent
     identity: Optional[float]   # percent
 
 def _to_number(value: str) -> Optional[float]:
+    """
+        Convert to number.
+    """
     try:
         return float(value.strip().rstrip("%"))
     except ValueError:
@@ -43,10 +45,10 @@ def _to_number(value: str) -> Optional[float]:
 def load_top_results(
     output_dir: Path, sample: str, limit: int = TOP_N
 ) -> tuple[Path, list[BlastHit]]:
-    """Return the results file used and the first `limit` hits in it.
-
-    The hits are shown in file order, so the order your pipeline wrote
-    them in is the ranking the user sees."""
+    """
+        Return the results file used and the first `limit` hits in it.
+        The hits are shown in file order.
+    """
     sample_dir = output_dir / sample
     pattern = RESULTS_FILE_PATTERN.format(sample=sample)
     matches = sorted(sample_dir.rglob(pattern)) if sample_dir.is_dir() else []
@@ -91,7 +93,9 @@ def load_top_results(
 def find_input_files(
     sample: str, primer_mode: int, input_dir: Path = INPUT_DIR
 ) -> tuple[Optional[str], Optional[str]]:
-    """Names of the forward and reverse input files for a sample (None if absent)."""
+    """
+        Names of the forward and reverse input files for a sample (None if absent).
+    """
     forward_suffix, reverse_suffix = PRIMER_SUFFIXES[primer_mode]
     forward = next(iter(sorted(input_dir.glob(f"*_{sample}_{forward_suffix}"))), None)
     reverse = next(iter(sorted(input_dir.glob(f"*_{sample}_{reverse_suffix}"))), None)

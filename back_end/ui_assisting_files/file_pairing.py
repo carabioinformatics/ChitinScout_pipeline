@@ -1,11 +1,11 @@
-"""Finds forward/reverse file pairs in the input folder. Contains no GUI code."""
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+# File path to input folder
 INPUT_DIR = Path(__file__).resolve().parent.parent / "Input"
 
-# primer mode -> (forward file ending, reverse file ending)
+# Different primer options
 PRIMER_SUFFIXES = {
     0: ("ITS1___1.ab1", "ITS4___1.ab1"),
     1: ("TEF_forward___1.ab1", "TEF_reverse___1.ab1"), 
@@ -13,12 +13,10 @@ PRIMER_SUFFIXES = {
     3: ("B_Tub_forward_Primer__1.ab1", "B_Tub_reverse_primer__1.ab1"),
 }
 
-
 @dataclass
 class UnpairedFile:
     file_name: str
-    missing: str          # "forward" or "reverse": the file that was NOT found
-
+    missing: str  # Either forward/reverse/none
 
 @dataclass
 class PairingResult:
@@ -26,19 +24,25 @@ class PairingResult:
     unpaired: list[UnpairedFile]    # files whose partner is missing
     unrecognised: list[str]         # .ab1 files that fit neither ending
 
-
 def sample_name_from(file_name: str) -> Optional[str]:
-    """Same as `cut -d'_' -f2` in the bash script."""
+    """
+        Copy on the sample name from the file.
+    """
     parts = file_name.split("_")
     return parts[1] if len(parts) > 1 else None
 
 
 def find_pairs(primer_mode: int, input_dir: Path = INPUT_DIR) -> PairingResult:
+    """
+        Finds all the file pairs in the input directory that have the specified
+        primer information included. Makes list of all unrecognised files, forward files,
+        reverse files and unpaired files.
+    """
     if not input_dir.is_dir():
         raise FileNotFoundError(f"Input folder not found: {input_dir}")
 
     forward_suffix, reverse_suffix = PRIMER_SUFFIXES[primer_mode]
-    forwards: dict[str, str] = {}    # sample name -> file name
+    forwards: dict[str, str] = {}
     reverses: dict[str, str] = {}
     unrecognised: list[str] = []
 
