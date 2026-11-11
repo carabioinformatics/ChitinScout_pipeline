@@ -1,13 +1,11 @@
-"""The home page: welcome, settings sections, run button, status, live output."""
 import asyncio
-
 from nicegui import app, ui
 from back_end.ui_assisting_files.runner import PipelineRunner
 from back_end.ui_assisting_files.user_config import get_email, set_email, is_valid_email
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
 from front_end.components.progress_bar_comp import SampleProgress
-from front_end.sections.pipeline_settings import PRIMERS, PipelineSettings
+from front_end.sections.pipeline_settings import PipelineSettings
 from front_end.sections.search_thresholds import SearchThresholds
 from front_end.sections.file_picker import FilePicker
 from front_end.sections.time_plot import TimePlot
@@ -15,9 +13,9 @@ from front_end.sections.input_upload import InputUpload
 from front_end.sections.sample_status_table import SampleStatusTable
 from front_end.sections.results_panel import ResultsPanel
 from front_end.theme import apply_theme
+from back_end.ui_assisting_files.primer_store import primer_labels
 
 # --- Status states ----------------------------------------------------
-# state -> (message, Quasar colour, icon)
 STATUS = {
     "waiting":        ("Waiting for primer choice",     "grey",      "hourglass_empty"),
     "select_samples": ("Waiting for sample selection",  "grey",      "checklist"),
@@ -28,7 +26,6 @@ STATUS = {
     "failed":         ("Pipeline failed",               "negative",  "error"),
     "stopped":        ("Pipeline stopped",              "blue-grey", "stop_circle"),
 }
-
 
 def home_page() -> None:
     apply_theme()
@@ -94,7 +91,7 @@ def home_page() -> None:
             sample=sample,
             output_dir=state["output_dir"],
             primer_mode=state["run_primer"],
-            primer_label=PRIMERS[state["run_primer"]],
+            primer_label=primer_labels()[state["run_primer"]],
         )
 
     async def on_run_click() -> None:

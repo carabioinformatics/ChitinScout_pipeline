@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 from nicegui import ui
-from back_end.ui_assisting_files.file_pairing import INPUT_DIR, PRIMER_SUFFIXES, find_pairs
+from back_end.ui_assisting_files.file_pairing import INPUT_DIR, find_pairs
 from front_end.components.button_comp import button
 from front_end.components.text_comp import text
 

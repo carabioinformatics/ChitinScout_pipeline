@@ -12,7 +12,7 @@ if __name__ in {"__main__", "__mp_main__"}:
         ui.run() does not run twice.
     """
     ui.run(
-        title="Sequencing Pipeline",
+        title="SporeOver Pipeline",
         native=False,
         reload=False,
     )

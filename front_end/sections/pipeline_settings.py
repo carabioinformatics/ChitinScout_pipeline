@@ -2,14 +2,15 @@ from typing import Callable, Optional
 from nicegui import ui
 from front_end.components.dropdown_comp import dropdown
 from front_end.components.text_comp import text
+from back_end.ui_assisting_files.primer_store import primer_labels, add_primer
 
 # List types of pipeline mode options, more can be added here
-PRIMERS = {
-    0: "ITS1 + ITS4 primers",
-    1: "TEF forward and reverse primers",
-    2: "LSU forward and reverse primers",
-    3: "B-Tub forward and reverse primers",
-}
+# PRIMERS = {
+#     0: "ITS1 + ITS4 primers",
+#     1: "TEF forward and reverse primers",
+#     2: "LSU forward and reverse primers",
+#     3: "B-Tub forward and reverse primers",
+# }
 TAXONOMY_MODES = {
     0: "Just a BLAST search and summary",
     1: "BLAST search, counter of each species and summary",
@@ -33,7 +34,6 @@ class PipelineSettings:
     ) -> None:
         self._log = log
         self._on_change = on_change
-
         self.primer: Optional[int] = None
         self.taxonomy_mode: int = next(iter(TAXONOMY_MODES))
         self.database_mode: int = next(iter(DATABASE_MODES))
@@ -46,9 +46,21 @@ class PipelineSettings:
             text("Pipeline settings", "label")
             # Primer dropdown
             self._primer_select = dropdown(
-                "Primer choice", PRIMERS, on_change=self._handle_primer
-            )
-            # Taxonomy mode dropdown
+                "Primer choice", primer_labels(), on_change=self._handle_primer
+            )      
+
+            # Add-a-primer form
+            self._add_expansion = ui.expansion("Add a new primer", icon="add").classes("w-full")
+            with self._add_expansion:
+                self._fwd_name = ui.input("Forward primer name").classes("w-full")
+                self._rev_name = ui.input("Reverse primer name").classes("w-full")
+                self._fwd_suffix = ui.input(
+                    "Forward file suffix", placeholder="e.g. ITS1___1.ab1"
+                ).classes("w-full")
+                self._rev_suffix = ui.input(
+                    "Reverse file suffix", placeholder="e.g. ITS4___1.ab1"
+                ).classes("w-full")
+                self._save_button = ui.button("Save primer", on_click=self._handle_add_primer)            # Taxonomy mode dropdown
             self._taxonomy_select = dropdown(
                 "Taxonomy mode", TAXONOMY_MODES,
                 value=self.taxonomy_mode, on_change=self._handle_taxonomy,
@@ -61,13 +73,41 @@ class PipelineSettings:
 
     # Event handlers
     def _handle_primer(self, e) -> None:
+            """
+                Selects and logs which primer has been selected from the primer dropdown.
+            """
+            self.primer = e.value
+            if e.value is not None:
+                self._log(f"Primer selected: {primer_labels()[e.value]}")
+            self._notify()
+    
+    def _handle_add_primer(self) -> None:
         """
-            Selects and logs which primer has been selected from the primer dropdown.
+            Validates and saves a new primer to primers.json, then adds it to the
+            dropdown and selects it.
         """
-        self.primer = e.value
-        if e.value is not None:
-            self._log(f"Primer selected: {PRIMERS[e.value]}")
-        self._notify()
+        try:
+            new_index = add_primer(
+                self._fwd_name.value or "",
+                self._rev_name.value or "",
+                self._fwd_suffix.value or "",
+                self._rev_suffix.value or "",
+            )
+        except ValueError as err:
+            ui.notify(str(err), type="warning")
+            return
+        except OSError as err:
+            ui.notify(f"Could not save primer: {err}", type="negative")
+            return
+
+        # Refresh the dropdown and select the new primer (this fires _handle_primer)
+        self._primer_select.set_options(primer_labels(), value=new_index)
+        self._log(f"New primer saved: {primer_labels()[new_index]}")
+        ui.notify("Primer saved", type="positive")
+
+        for field in (self._fwd_name, self._rev_name, self._fwd_suffix, self._rev_suffix):
+            field.set_value("")
+        self._add_expansion.close()
 
     def _handle_taxonomy(self, e) -> None:
         """"
@@ -107,5 +147,9 @@ class PipelineSettings:
         """
             Lock or unlock all dropdowns (used while the pipeline runs).
         """
-        for select in (self._primer_select, self._taxonomy_select, self._database_select):
-            select.set_enabled(enabled)
+        for control in (
+            self._primer_select, self._taxonomy_select, self._database_select,
+            self._fwd_name, self._rev_name, self._fwd_suffix, self._rev_suffix,
+            self._save_button,
+        ):
+            control.set_enabled(enabled)

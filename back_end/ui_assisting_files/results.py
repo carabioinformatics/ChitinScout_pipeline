@@ -2,7 +2,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-from back_end.ui_assisting_files.file_pairing import INPUT_DIR, PRIMER_SUFFIXES
+from back_end.ui_assisting_files.file_pairing import INPUT_DIR
+from back_end.ui_assisting_files.primer_store import get_suffixes
 
 # Where the BLAST summary is saved.
 RESULTS_FILE_PATTERN = "Final/INT26_{sample}_BLAST_SUMMARY_NCBI.txt"
@@ -96,7 +97,7 @@ def find_input_files(
     """
         Names of the forward and reverse input files for a sample (None if absent).
     """
-    forward_suffix, reverse_suffix = PRIMER_SUFFIXES[primer_mode]
+    forward_suffix, reverse_suffix = get_suffixes(primer_mode)
     forward = next(iter(sorted(input_dir.glob(f"*_{sample}_{forward_suffix}"))), None)
     reverse = next(iter(sorted(input_dir.glob(f"*_{sample}_{reverse_suffix}"))), None)
     return (forward.name if forward else None, reverse.name if reverse else None)

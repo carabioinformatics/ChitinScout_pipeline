@@ -1,17 +1,18 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+from back_end.ui_assisting_files.primer_store import get_suffixes
 
 # File path to input folder
 INPUT_DIR = Path(__file__).resolve().parent.parent / "Input"
 
 # Different primer options
-PRIMER_SUFFIXES = {
-    0: ("ITS1___1.ab1", "ITS4___1.ab1"),
-    1: ("TEF_forward___1.ab1", "TEF_reverse___1.ab1"), 
-    2: ("LSU_forward___1.ab1", "LSU_reverse___1.ab1"),
-    3: ("B_Tub_forward_Primer__1.ab1", "B_Tub_reverse_primer__1.ab1"),
-}
+# PRIMER_SUFFIXES = {
+#     0: ("ITS1___1.ab1", "ITS4___1.ab1"),
+#     1: ("TEF_forward___1.ab1", "TEF_reverse___1.ab1"), 
+#     2: ("LSU_forward___1.ab1", "LSU_reverse___1.ab1"),
+#     3: ("B_Tub_forward_Primer__1.ab1", "B_Tub_reverse_primer__1.ab1"),
+# }
 
 @dataclass
 class UnpairedFile:
@@ -41,7 +42,7 @@ def find_pairs(primer_mode: int, input_dir: Path = INPUT_DIR) -> PairingResult:
     if not input_dir.is_dir():
         raise FileNotFoundError(f"Input folder not found: {input_dir}")
 
-    forward_suffix, reverse_suffix = PRIMER_SUFFIXES[primer_mode]
+    forward_suffix, reverse_suffix = get_suffixes(primer_mode)
     forwards: dict[str, str] = {}
     reverses: dict[str, str] = {}
     unrecognised: list[str] = []
