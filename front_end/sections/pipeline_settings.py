@@ -5,12 +5,6 @@ from front_end.components.text_comp import text
 from back_end.ui_assisting_files.primer_store import primer_labels, add_primer
 
 # List types of pipeline mode options, more can be added here
-# PRIMERS = {
-#     0: "ITS1 + ITS4 primers",
-#     1: "TEF forward and reverse primers",
-#     2: "LSU forward and reverse primers",
-#     3: "B-Tub forward and reverse primers",
-# }
 TAXONOMY_MODES = {
     0: "Just a BLAST search and summary",
     1: "BLAST search, counter of each species and summary",

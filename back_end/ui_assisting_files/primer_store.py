@@ -4,6 +4,7 @@ from pathlib import Path
 CONFIG_DIR = Path(__file__).resolve().parent.parent.parent / "config"
 PRIMERS_FILE = CONFIG_DIR / "primers.json"
 
+# Default primers that is always an option. Stored here so that it can't be deleted by accident.
 DEFAULT_PRIMERS = [
     {
         "label": "ITS1 + ITS4 primers",
@@ -35,13 +36,15 @@ DEFAULT_PRIMERS = [
     },
 ]
 
+# Key structure for building the JSON file
 REQUIRED_KEYS = {
     "label", "forward_name", "reverse_name", "forward_suffix", "reverse_suffix",
 }
 
-
 def _load_custom() -> list[dict]:
-    """Read user-added primers. Missing or corrupt file -> empty list."""
+    """
+        Read user-added primers. If the file is missing or corrupt, it returns an empty list.
+    """
     if not PRIMERS_FILE.exists():
         return []
     try:
@@ -52,20 +55,20 @@ def _load_custom() -> list[dict]:
         return []
     return [p for p in data if isinstance(p, dict) and REQUIRED_KEYS <= p.keys()]
 
-
 def _save_custom(primers: list[dict]) -> None:
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)  # creates Config/ if needed
+    """
+        Save custom primer details to the primer JSON by making a temporary file and then swapping.
+    """
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     tmp = PRIMERS_FILE.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(primers, indent=2), encoding="utf-8")
-    tmp.replace(PRIMERS_FILE)  # write then swap, so a crash can't corrupt the file
-
+    tmp.replace(PRIMERS_FILE)
 
 def all_primers() -> list[dict]:
     """
-        Defaults first, then user-added primers.
+        Get list of default primers first, then user-added primers.
     """
     return DEFAULT_PRIMERS + _load_custom()
-
 
 def primer_labels() -> dict[int, str]:
     """
@@ -73,14 +76,12 @@ def primer_labels() -> dict[int, str]:
     """
     return {i: p["label"] for i, p in enumerate(all_primers())}
 
-
 def get_suffixes(index: int) -> tuple[str, str]:
     """
-        Get the file ending for a primer pairing type.
+        Get the file ending list for a primer pairing type.
     """
     p = all_primers()[index]
     return p["forward_suffix"], p["reverse_suffix"]
-
 
 def add_primer(
     forward_name: str,
@@ -89,8 +90,8 @@ def add_primer(
     reverse_suffix: str,
 ) -> int:
     """
-    Validate and save a new primer. Returns its index.
-    Raises ValueError with a user-friendly message if something is wrong.
+        Validate and save a new primer. Returns its index.
+        Raises ValueError with a user-friendly message if something is wrong.
     """
     forward_name = forward_name.strip()
     reverse_name = reverse_name.strip()
@@ -118,4 +119,4 @@ def add_primer(
         }
     )
     _save_custom(custom)
-    return len(existing)  # index of the newly added primer
+    return len(existing) 

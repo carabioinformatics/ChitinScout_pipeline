@@ -5,6 +5,7 @@ import signal
 import tempfile
 from pathlib import Path
 from typing import Callable, Optional, Sequence
+from back_end.ui_assisting_files.primer_store import get_suffixes
 
 # Folder containing run.sh, ITSrun.sh and TEFrun.sh
 SCRIPT_DIR = Path(__file__).resolve().parent.parent
@@ -51,10 +52,10 @@ class PipelineRunner:
         on_output_dir: Optional[Callable[[Path], None]] = None      
     ) -> int:
         """
-            Run ./run.sh <primer_mode> [extra_args...] and return its exit code.
+            Run ./run.sh <forward_suffix> <reverse_suffix> [extra_args...] and return its exit code.
         """
         self._stopped_by_user = False
-
+        forward_suffix, reverse_suffix = get_suffixes(primer_mode)
         env = {**os.environ, "PYTHONUNBUFFERED": "1"}
         sample_list_path = self._write_sample_list(sample_names)
         if sample_list_path:
@@ -62,7 +63,7 @@ class PipelineRunner:
 
         try:
             self._process = await asyncio.create_subprocess_exec(
-                "bash", "./run.sh", str(primer_mode), *extra_args,
+                "bash", "./run.sh", forward_suffix, reverse_suffix, *extra_args,
                 cwd=SCRIPT_DIR,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,

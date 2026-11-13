@@ -97,15 +97,15 @@ Samples were collected from different Ostrich farms and egg incubation rooms in 
     - ./build_database.sh
     - chmod +x run.sh run_ITS.sh run_TEF.sh
 - For every time: 
-    ./run.sh primer_mode taxonomy_mode database_mode
-    What I usually use: ./run.sh 0 1 0
+    ./run.sh forward_file_suffix reverse_file_suffix taxonomy_mode database_mode
+    What I usually use: ./run.sh ITS1___1.ab1 ITS4___1.ab1 1 0
 - What each parameter of ./run.sh means
-    Primer mode: 
-        Need to specify which primers are used so that pipeline gets sligthly adapted to perform optimally for those primers.
-        Mode 0: ITS primers
-        Mode 1: TEF primers
-        Mode 2: LSU primers
-        Mode 3: B-Tub primers
+    Forward file suffix:
+        Specify how this primer's files can be identified. With Sanger sequencing, these files usually end with the primer name and the standard ending.
+        Examples: ITS1___1.ab1/B_Tub_forward___1.ab1
+    Reverse file suffix:
+        Specify how this primer's files can be identified. With Sanger sequencing, these files usually end with the primer name and the standard ending.
+        Examples: ITS4___1.ab1, B_Tub_reverse___1.ab1
     Taxonomy mode:
         Mode 0: Does complete BLASTn search and makes a summary of the results.
         Mode 1: Does a complete BLASTn search and makes a summary of the results. But also then counts how many hits were found for each species.
