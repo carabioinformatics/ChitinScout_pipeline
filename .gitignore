@@ -21,3 +21,9 @@ __pycache__/
 
 # Unused files
 back_end/nextflow
+
+# Testing related
+testing/test_reports/
+.pytest_cache/
+testing/output/
+testing/regression/convert_files.py

@@ -4,7 +4,6 @@ from datetime import datetime
 from Bio import SeqIO
 import subprocess
 import os
-from pipeline_status import report_step
 sample = os.environ.get("CURRENT_SAMPLE", "")
 
 def main():

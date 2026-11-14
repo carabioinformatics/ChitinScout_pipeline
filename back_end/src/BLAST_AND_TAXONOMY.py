@@ -13,7 +13,7 @@ import numpy
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from pipeline_status import report_step
+from back_end.src.pipeline_status import report_step
 sample = os.environ.get("CURRENT_SAMPLE", "")
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from back_end.ui_assisting_files.user_config import get_email

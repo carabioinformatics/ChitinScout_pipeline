@@ -5,8 +5,8 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Seq import Seq
-import REVERSE_COMPLEMENT_AND_ALIGNMENT
-from pipeline_status import report_step
+import back_end.src.REVERSE_COMPLEMENT_AND_ALIGNMENT as REVERSE_COMPLEMENT_AND_ALIGNMENT
+from back_end.src.pipeline_status import report_step
 import os
 sample = os.environ.get("CURRENT_SAMPLE", "")
 
@@ -29,7 +29,7 @@ def main():
     ############################ Arguments #####################################
     s_forward_file = sys.argv[1]
     s_reverse_file = sys.argv[2]
-    max_trimming = int(sys.argv[3])
+    max_trimming = int(sys.argv[3])     # usually 50
     window_size = int(sys.argv[4])            #between 5 - 10: good for short reads, 10-20 smoother, more conservative
     quality_threshold = int(sys.argv[5])      #Could go up to 30 for stricter trimming; 20 standard
     cleanup_directory_extension = sys.argv[6]

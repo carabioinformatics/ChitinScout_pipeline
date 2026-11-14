@@ -11,6 +11,10 @@ dependencies:
   - blast
   - pandas
   - matplotlib
+  - pytest
+  - pytest-html
+  - plotly
+  - pre-commit
   - pip
   - pip:
     - nicegui

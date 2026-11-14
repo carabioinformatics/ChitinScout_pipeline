@@ -49,16 +49,21 @@ def home_page() -> None:
 
     def set_status(new_status: str) -> None:
         state["status"] = new_status
+        # Play sound to show the pipeline is complete
         status_display.refresh()
 
     def log(message: str) -> None:
-        """Passed to every section so they can all write to the output log.
-        output_log is created further down; this is only called later."""
+        """
+            Passed to every section so they can all write to the output log.
+            output_log is created further down; this is only called later.
+        """
         output_log.push(message)
 
     # ---- Event handlers
     def update_ready_state() -> None:
-        """Decide whether Run can be clicked and what the status should say."""
+        """
+            Decide whether Run can be clicked and what the status should say.
+        """
         ready = settings.is_complete and file_picker.has_selection
         run_button.set_enabled(ready)
 
@@ -162,7 +167,7 @@ def home_page() -> None:
             return
         set_email(email_input.value)
         email_dialog.close()
-        log(f"Entrez email set to {get_email}")
+        log(f"Entrez email set to {get_email()}")
 
     # ---- Layout
     with ui.column().classes("w-full max-w-6xl mx-auto gap-6 p-8"):

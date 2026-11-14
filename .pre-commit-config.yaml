@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pytest-regression
+        name: Regression tests
+        entry: pytest -m regression -q
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -123,6 +123,7 @@ the instructions at https://www.anaconda.com/docs/getting-started/miniconda/inst
 - In the root directory
 - The first time, type this in the Ubuntu terminal
     - conda env create -f environment.yml
+    - Also run this command to set up the testing: "pre-commit install"
 - For every other time to activate environment
     - conda activate bioinfo
 - To deactivate the environment
@@ -139,6 +140,14 @@ the instructions at https://www.anaconda.com/docs/getting-started/miniconda/inst
 
 ## Running the pipeline from the terminal only ##
 - Folow instructions in the README.md in the back_end folder
+
+## Running tests ##
+Make sure it is installed once per clone after the environment set up
+- To run pre-commit tests locally: "pre-commit run --all-files"
+- The regression tests run each time you try to commit. If any of the tests fail, it give you report as to why. If you would like to commit without these tests running, you can commit using "git commit --no-verify"
+- To run the regression tests separately
+    pytest -m regression
+    pytest -m parameter_study
 
 ## Important notes ##
 - You can't just rename for example an input file. If you want to, you need to rename
